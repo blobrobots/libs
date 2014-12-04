@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bPhysics.h
+ *  title: physics.h
  *  brief: Physics methods and constants
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com

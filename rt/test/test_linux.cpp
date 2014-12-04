@@ -1,11 +1,11 @@
 /********* blob robotics 2014 *********
- *  title: test.cpp
- *  brief: test for comms library
+ *  title: test_linux.cpp
+ *  brief: test for comms library (linux)
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  /*************************************/
 #include <iostream>
-#include "bTask.h"
+#include "blob/task.h"
 
 class TestTask : public blob::Task 
 {

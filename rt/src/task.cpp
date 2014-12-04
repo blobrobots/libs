@@ -1,10 +1,10 @@
 /********* blob robotics 2014 *********
- *  title: bTask.cpp
+ *  title: task.cpp
  *  brief: implemention of generic task
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "bTask.h"
+#include "blob/task.h"
 
 #if defined(__linux__)
   #include <unistd.h>
@@ -73,7 +73,7 @@ bool blob::Task::waited (uint32_t ms)
   return retval; 
 }
 
-void blob::Task::delay(uint32_t ms) 
+void blob::Task::delayMs (uint32_t ms) 
 {
 #if defined(__AVR_ATmega32U4__)
   delay(ms);

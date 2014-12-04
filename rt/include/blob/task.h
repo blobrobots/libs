@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bTask.h
+ *  title: task.h
  *  brief: interface for generic task
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -7,7 +7,7 @@
 #ifndef B_TASK_H
 #define B_TASK_H
 
-#include <bTypes.h>
+#include <blob/types.h>
 
 namespace blob {
 
@@ -28,7 +28,7 @@ class Task
     
     static uint8_t getNumberOfTasks ();
   
-    static void delay (uint32_t ms);
+    static void delayMs (uint32_t ms);
   protected:
     static uint8_t _number;
     bool     _ready;  // to be updated externally when init() is completed correctly

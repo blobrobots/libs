@@ -1,6 +1,6 @@
 /********* blob robotics 2014 *********
- *  title: bTypes.h
- *  brief: Special types for blob env.
+ *  title: types.h
+ *  brief: Ttypes for blob environment
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/

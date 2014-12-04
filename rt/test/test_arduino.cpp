@@ -1,12 +1,12 @@
 /********* blob robotics 2014 *********
  *  title: test_arduino.cpp
- *  brief: test for comms library
+ *  brief: test for comms library (arduino)
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  /*************************************/
 
 #include "Arduino.h"
-#include "bTask.h"
+#include "blob/task.h"
 
 class TestTask : public blob::Task 
 {

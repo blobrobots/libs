@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: b6dof3d.h
+ *  title: 6dof.h
  *  brief: 6dof classes and functions
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com

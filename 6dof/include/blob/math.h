@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bMath.h
+ *  title: math.h
  *  brief: Math functions and constants
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com

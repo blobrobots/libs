@@ -1,5 +1,5 @@
 /********* blob robotics 2014 *********
- *  title: bUnits.h
+ *  title: units.h
  *  brief: Unit converter
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
@@ -8,7 +8,7 @@
 #ifndef B_UNITS_H
 #define B_UNITS_H
 
-#include "bMath.h"
+#include "blob/math.h"
 
 namespace blob {
 
