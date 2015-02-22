@@ -246,7 +246,7 @@ bool test07_cholesky()
   std::cout << "chol(" << std::endl;
   A.print();
   std::cout << ") = " << std::endl; 
-  blob::Matrix::cholesky(A);
+  A.cholesky(true);
   A.print();
   std::cout << std::endl;
   return true;
@@ -260,11 +260,11 @@ bool test08_inverse()
                 4.f, 16.f, 36.f, 64.f, 80.f,
                 5.f, 20.f, 45.f, 80.f, 125.f };
 
-  float a1[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
-                 2.f, 8.f, 12.f, 16.f, 20.f,
-                 3.f, 12.f, 27.f, 36.f, 45.f,
-                 4.f, 16.f, 36.f, 64.f, 80.f,
-                 5.f, 20.f, 45.f, 80.f, 125.f };
+  float a1[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+                0.f, 0.f, 0.f, 0.f, 0.f,
+                0.f, 0.f, 0.f, 0.f, 0.f,
+                0.f, 0.f, 0.f, 0.f, 0.f,
+                0.f, 0.f, 0.f, 0.f, 0.f };
 
   float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -278,9 +278,24 @@ bool test08_inverse()
 
 
   std::cout << "inv(" << std::endl;
-  A1.print();
+  A.print();
   std::cout << ") = " << std::endl;
-  blob::Matrix::inverse(A1);
+  A1.copy(A);
+  A1.inverse();
+  A1.print();
+  std::cout << " => " << std::endl; 
+  A.print();
+  std::cout << " * " << std::endl; 
+  A1.print();
+  std::cout << " = " << std::endl; 
+  blob::Matrix::multiply(A,A1,R);
+  R.print();
+  std::cout << std::endl;
+
+  std::cout << "inv(" << std::endl;
+  A.print();
+  std::cout << ") = " << std::endl;
+  blob::Matrix::inverse(A,A1);
   A1.print();
   std::cout << " => " << std::endl; 
   A.print();

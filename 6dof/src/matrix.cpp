@@ -14,28 +14,281 @@
 #include <math.h>
 #endif
 
-bool blob::Matrix::get (uint8_t row, uint8_t col, float &val) 
+float & blob::Matrix::operator()(const uint8_t row, const uint8_t col)
 {
-  float retval = false;
-  if((_data)&&(row<_nrows)&&(col<_ncols)) 
-  { 
-    val = _data[_ncols*row + col]; 
+  if(_data && (row<_nrows) && (col<_ncols))
+    return _data[_ncols*row + col];
+  else
+    return _data[0];
+}
+
+const float & blob::Matrix::operator()(const uint8_t row, const uint8_t col) const
+{
+  if(_data && (row<_nrows) && (col<_ncols))
+    return _data[_ncols*row + col];
+  else
+    return _data[0];
+}
+
+float & blob::Matrix::operator[](int i)
+{
+  if(_data && (i<_nrows*_ncols))
+    return _data[i];
+  else
+    return _data[0];
+}
+
+const float & blob::Matrix::operator[](int i) const 
+{
+  if(_data && (i<_nrows*_ncols))
+    return _data[i];
+  else
+    return _data[0];
+}
+
+blob::Matrix & blob::Matrix::operator+=(blob::Matrix &A)
+{
+  this->add(A); 
+}
+
+blob::Matrix & blob::Matrix::operator-=(blob::Matrix &A)
+{
+  this->substract(A);
+}
+
+blob::Matrix & blob::Matrix::operator*=(const float &n)
+{
+  this->scale(n);
+}
+
+blob::Matrix & blob::Matrix::operator*=(blob::Matrix &A)
+{
+  this->multiply(A);
+}
+
+bool blob::Matrix::copy        (blob::Matrix &A)
+{
+  if(_data && A.data() && (A.nrows()==_nrows) && (A.ncols()==_ncols))
+  {
+    memcpy(_data, A.data(), A.length()*sizeof(float));
+  }
+  #if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix is not square" << std::endl;
+#endif
+}
+
+bool blob::Matrix::add        (blob::Matrix &A)
+{
+  bool retval = false;
+
+  if(_data && A.data() &&
+    (A.nrows()==_nrows) && (A.ncols()==_ncols))
+  {
+    for (int i = 0; i < _nrows*_ncols; i++) 
+    {
+      _data[i] += A[i];
+    }
     retval = true;
-  } 
+  }
   return retval;
 }
 
-bool blob::Matrix::set (uint8_t row, uint8_t col, float val) 
+bool blob::Matrix::substract  (blob::Matrix &A)
 {
   bool retval = false;
-  if((_data)&&(row<_nrows)&&(col<_ncols)) 
-  { 
-    _data[_ncols*row + col] = val; 
+  
+  if(_data && A.data() &&
+    (A.nrows()==_nrows) && (A.ncols()==_ncols))
+  {
+    for (int i = 0; i < _nrows*_ncols; i++) 
+    {
+      _data[i] -= A[i];
+    }
     retval = true;
-  } 
+  }
   return retval;
 }
-    
+bool blob::Matrix::scale (const float &n)
+{
+  bool retval = false;
+  
+  if(_data)
+  {
+    for (int i = 0; i < _nrows*_ncols; i++) 
+    {
+      _data[i] = n*_data[i];
+    }
+    retval = true;
+  }
+  return true;
+}
+
+bool blob::Matrix::multiply   (blob::Matrix &A)
+{
+  bool retval = false;
+  
+  if((_nrows == A.nrows()) && (_ncols == A.ncols()))
+  {
+    float r[BLOB_MATRIX_MAX_COLS*BLOB_MATRIX_MAX_ROWS];
+    Matrix R(_nrows, _ncols,r);
+  
+    R.zero();
+
+    for (int i = 0; i < A.nrows(); i++)
+    {
+      for (int j = 0; j < A.ncols(); j++)
+      {
+        for (int k = 0; k < A.ncols(); k++)
+        {
+          R(i,j) += _data[i*_ncols+k]*A(k,j); 
+        }
+      }
+    }
+    memcpy(_data,R.data(),R.length()*sizeof(float));
+    retval = true;
+  }
+  return retval;
+}
+
+bool blob::Matrix::transpose  ()
+{
+  bool retval = false;
+  
+  float r[BLOB_MATRIX_MAX_COLS*BLOB_MATRIX_MAX_ROWS];
+  Matrix R(_nrows, _ncols, r);
+  
+  R.zero();
+
+  for (int i = 0; i < _nrows; i++)
+  {
+    for (int j = 0; j < _ncols; j++) 
+    {
+      R(j,i) = _data[i*_ncols + j];
+    }
+  }
+  memcpy(_data, R.data(), R.length()*sizeof(float));
+  retval = true;
+
+  return retval;
+}
+
+bool blob::Matrix::cholesky (bool zero)
+{
+  bool retval = true;
+
+  if(_nrows == _ncols)
+  {
+    float t;
+    uint8_t n = _nrows;
+    int i=0,j=0,k=0;
+    for(i=0 ; i<n && retval == true; i++) 
+    {
+      if(i > 0) 
+      {
+        for(j=i; j<n; j++) 
+        {
+          t = 0.f;
+          for(k=0; k<i; k++)
+            t += _data[j*n + k]*_data[i*n + k];
+          _data[j*n+i] -= t;
+        }
+      }
+      if(_data[i*n + i] <= 0.f) 
+      {
+#if defined(__DEBUG__) & defined(__linux__)
+        std::cerr << "Matrix is not positive definite" << std::endl;
+ #endif
+        retval = false;
+      }
+      else
+      {
+        t = 1.f/sqrtf(_data[i*n + i]);
+        for(j = i ; j < n ; j++)
+          _data[j*n + i] *= t;
+      }
+    }
+    if(zero)
+    {
+      for(int i=n-1; i>0; i--)
+      {
+        for(int j=i-1; j>=0; j--)
+        {
+          _data[j*n+i]=0;
+        }
+      }
+    }
+  }
+  else
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix is not square" << std::endl;
+#endif
+    retval = false;
+  }
+  return retval;
+}
+
+bool blob::Matrix::inverseLow ()
+{
+  // Inverse assuming Lower triangular matrix
+  bool retval = false;
+
+  if(_nrows == _ncols)
+  {
+    uint8_t n = _nrows;
+    for(int i=0; i<n; i++)
+    {
+      _data[i*n + i] = 1.f/_data[i*n + i];
+      for(int j=i+1; j<n; j++)
+      {
+        float t = 0.0;
+        for(int k=i; k<j; k++)
+          t -= _data[j*n + k]*_data[k*n + i];
+        _data[j*n + i] = t/_data[j*n + j];
+      }
+    }
+    retval = true;
+  }
+  return retval;
+}
+
+bool blob::Matrix::inverse ()
+{
+  bool retval = false;
+  
+  if((cholesky() == true) && 
+     (inverseLow()== true))
+  {
+  //Reconstruct inverse of A: inv(L)'*inv(L)
+    uint8_t n = _nrows;
+    for(int i=0; i<n; i++)
+    {
+      int ii = n-i-1;
+      for(int j=0; j<=i; j++)
+      {
+        int jj = n-j-1;
+        float t = 0.0;
+        for(int k=0; k<=ii; k++)
+        {
+          int kk = n-k-1;
+          t += _data[kk*n + i]*_data[kk*n + j];
+        }
+        _data[i*n + j] = t;
+      }
+    }
+    //de-triangularization
+    for(int i=n-1; i>0; i--)
+    {
+      for(int j=i-1; j>=0; j--)
+      {
+        _data[j*n+i] = _data[i*n+j];
+      }
+    }
+    retval = true;
+  }
+  return retval;
+}
 
 bool blob::Matrix::fillRows(blob::Matrix &A, uint8_t startrow, uint8_t nrows)
 {
@@ -90,6 +343,18 @@ bool blob::Matrix::eye()
   }
 }
 
+bool blob::Matrix::copy (blob::Matrix  &Dest, blob::Matrix &Orig)
+{
+  bool retval = false;
+  if(Dest.data() && Orig.data() &&
+    (Dest.nrows() == Orig.nrows()) && (Dest.ncols() == Orig.ncols()))
+  {
+    memcpy(Dest.data(),Orig.data(),Orig.length()*sizeof(float));
+    retval = true;
+  }
+  return retval;
+}    
+
 bool blob::Matrix::add (blob::Matrix  &A, blob::Matrix &B, blob::Matrix &R)
 {
   bool retval = false;
@@ -120,14 +385,20 @@ bool blob::Matrix::substract (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
   return retval;
 }
 
-bool blob::Matrix::scale (const float &n)
+bool blob::Matrix::scale (const float &n, blob::Matrix &A, blob::Matrix &R)
 {
-  for (int i = 0; i < _nrows*_ncols; i++) 
+  bool retval = false;
+  if((A.nrows() == R.nrows()) && (A.ncols() == R.ncols()))
   {
-    _data[i] = n*_data[i];
+    for (int i = 0; i < R.length(); i++) 
+    {
+      R[i] = n*A[i];
+    }
+    retval = true;
   }
-  return true;
+  return retval;
 }
+
 
 bool blob::Matrix::multiply (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
 {
@@ -151,35 +422,6 @@ bool blob::Matrix::multiply (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
   }
   return retval;
 }
- 
-/*bool blob::Matrix::inverse (blob::Matrix &A)
-{
-  // Backward solve Ux = y, with: U=R[i][j], x[i]=R[i][k],  y[i] = s[i] = (i==k) R[i][i]:0
-  // http://arxiv.org/pdf/1111.4144.pdf
-  // http://en.wikipedia.org/wiki/Triangular_matrix#Forward_and_back_substitution
-  // FIXME: Probably needs transpose
-  if((A.nrows() == A.nrows()) && (A.ncols() == A.ncols()) &&
-     (blob::Matrix::cholesky(A) == true))
-  {
-    for(int k=0; k<A.ncols(); k++)
-    {
-      for (int i=A.nrows()-1; i>=0; i--)
-      {
-        //A[i*A.ncols()+k] = (i==k)? 1.f/A[i*A.ncols()+k] : 0; // x[i] = y[i]
-        A[k*A.ncols()+i] = (i==k)? 1.f/A[k*A.ncols()+i] : 0; // x[i] = y[i]
-
-        for (int j=i+1; j < A.nrows(); j++)
-        {
-          //A[i*A.ncols()+k] -= A[i*A.ncols()+j]*A[j*A.ncols()+k]; // x[i] = x[i] - U[i, j]*x[j];
-          A[k*A.ncols()+i] -= A[j*A.ncols()+i]*A[k*A.ncols()+j]; // x[i] = x[i] - U[i, j]*x[j];
-        }
-        //A[i*A.ncols()+k] /= A[i*A.ncols()+i]; // x[i] /= U[i,i];
-        A[k*A.ncols()+i] /= A[i*A.ncols()+i]; // x[i] /= U[i,i]; 
-      }
-    }
-  }
-}
-*/
 
 bool blob::Matrix::transpose (blob::Matrix &A, blob::Matrix &R)
 {
@@ -205,7 +447,9 @@ bool blob::Matrix::cholesky (blob::Matrix &A, blob::Matrix &L)
   float t;
   uint8_t n = A.nrows();
   L.zero();
-  if((A.nrows() == L.nrows()) && (A.ncols() == L.ncols()))
+  if((A.nrows() == A.ncols()) &&
+     (A.nrows() == L.nrows()) && 
+     (A.ncols() == L.ncols()))
   {
     for (int i = 0; i < n; i++)
     {
@@ -231,60 +475,66 @@ bool blob::Matrix::cholesky (blob::Matrix &A, blob::Matrix &L)
   }
 }
 
-
-bool blob::Matrix::cholesky (blob::Matrix &L, bool zero)
+bool blob::Matrix::inverseLow (blob::Matrix &L, blob::Matrix &R)
 {
-  bool retval = true;
+  // Inverse assuming Lower triangular matrix
+  bool retval = false;
 
-  if(L.nrows() == L.ncols())
+  if((L.nrows() == L.ncols())&&
+     (R.nrows() == L.nrows()) && 
+     (R.ncols() == L.ncols()))
   {
-    float t;
     uint8_t n = L.nrows();
-    int i=0,j=0,k=0;
-    for(i=0 ; i<n && retval == true; i++) 
+    R.zero();
+    for(int i=0; i<n; i++)
     {
-      if(i > 0) 
+      R[i*n + i] = 1.f/L[i*n + i];
+      for(int j=i+1; j<n; j++)
       {
-        for(j=i; j<n; j++) 
-        {
-          t = 0.f;
-          for(k=0; k<i; k++)
-            t += L[j*n + k] * L[i*n + k];
-          L[j*n+i] -= t;
-        }
-      }
-      if(L[i * n+i] <= 0.f) 
-      {
-#if defined(__DEBUG__) & defined(__linux__)
-        std::cerr << "Matrix is not positive definite" << std::endl;
- #endif
-        retval = false;
-      }
-      else
-      {
-        t = 1.f/sqrtf(L[i*n + i]);
-        for(j = i ; j < n ; j++)
-          L[j*n + i] *= t;
+        float t = 0.0;
+        for(int k=i; k<j; k++)
+          t -= L[j*n + k]*L[k*n + i];
+        R[j*n + i] = t/L[j*n + j];
       }
     }
-    if(zero)
-    {
-      for(int i=n-1; i>0; i--)
-      {
-        for(int j=i-1; j>=0; j--)
-        {
-          L[j*n+i]=0;
-        }
-      }
-    }
-
+    retval = true;
   }
-  else
+  return retval;
+}
+
+bool blob::Matrix::inverse (blob::Matrix &A, blob::Matrix &R)
+{
+  bool retval = false;
+  
+  if((cholesky(A,R)  == true) && 
+     (R.inverseLow() == true))
   {
-#if defined(__DEBUG__) & defined(__linux__)
-    std::cerr << "Matrix is not square" << std::endl;
-#endif
-    retval = false;
+    //Reconstruct inverse of R: inv(L)'*inv(L)
+    uint8_t n = R.nrows();
+    for(int i=0; i<n; i++)
+    {
+      int ii = n-i-1;
+      for(int j=0; j<=i; j++)
+      {
+        int jj = n-j-1;
+        float t = 0.0;
+        for(int k=0; k<=ii; k++)
+        {
+          int kk = n-k-1;
+          t += R[kk*n + i]*R[kk*n + j];
+        }
+        R[i*n + j] = t;
+      }
+    }
+    // de-triangularization
+    for(int i=n-1; i>0; i--)
+    {
+      for(int j=i-1; j>=0; j--)
+      {
+        R[j*n+i] = R[i*n+j];
+      }
+    }
+    retval = true;
   }
   return retval;
 }
@@ -306,66 +556,4 @@ void blob::Matrix::print ()
     Serial.println("");
 #endif
   }
-}
-
-bool blob::Matrix::inverseLow (blob::Matrix &L)
-{
-  // Inverse of Lower triangular matrix
-  bool retval = false;
-
-  if(L.nrows() == L.ncols())
-  {
-    uint8_t n = L.nrows();
-    for(int i=0; i<n; i++)
-    {
-      L[i*n + i] = 1.f/L[i*n + i];
-      for(int j=i+1; j<n; j++)
-      {
-        float t = 0.0;
-        for(int k=i; k<j; k++)
-          t -= L[j*n + k]*L[k*n + i];
-        L[j*n + i] = t/L[j*n + j];
-      }
-    }
-    retval = true;
-  }
-  return retval;
-}
-
-bool blob::Matrix::inverse (blob::Matrix &A)
-{
-  // Reconstruct inverse of A: inv(L)'*inv(L)
-  bool retval = false;
-  
-  if((A.nrows() == A.ncols()) && 
-     (blob::Matrix::cholesky(A) == true) && 
-     (blob::Matrix::inverseLow(A)))
-  {
-    uint8_t n = A.nrows();
-    for(int i=0; i<n; i++)
-    {
-      int ii = n-i-1;
-      for(int j=0; j<=i; j++)
-      {
-        int jj = n-j-1;
-        float t = 0.0;
-        for(int k=0; k<=ii; k++)
-        {
-          int kk = n-k-1;
-          t += A[kk*n + i]*A[kk*n + j];
-        }
-        A[i*n + j] = t;
-      }
-    }
-    // de-triangularization
-    for(int i=n-1; i>0; i--)
-    {
-      for(int j=i-1; j>=0; j--)
-      {
-        A[j*n+i]=A[i*n+j];
-      }
-    }
-    retval = true;
-  }
-  return retval;
 }

@@ -22,10 +22,7 @@ class Matrix
     uint8_t nrows () { return _nrows; }
     uint8_t ncols () { return _ncols; }
     uint16_t length () { return (uint16_t)_ncols*_nrows; }
-
-    bool get (uint8_t row, uint8_t col, float &val);
-    bool set (uint8_t row, uint8_t col, float val);
-    
+ 
     float *data () {return _data;};
     
     bool fillRows (Matrix &A, uint8_t row=0, uint8_t nrows=1);
@@ -33,20 +30,34 @@ class Matrix
     bool zero () {memset(_data,0,sizeof(float)*_nrows*_ncols); return true;}
     bool eye  ();
 
-    float & operator[](int i) {return _data[i];}
+    float & operator()(const uint8_t row, const uint8_t col);
+    const float & operator()(const uint8_t row, const uint8_t col) const;
+    float & operator[](int i);
+    const float & operator[](int i) const;
+    Matrix & operator+=(Matrix &A);
+    Matrix & operator-=(Matrix &A);
+    Matrix & operator*=(const float &n);
+    Matrix & operator*=(Matrix &A);
 
-    const float & operator[](int i) const {return _data[i];}
-    
+    bool copy       (Matrix &A);
+    bool add        (Matrix &A);
+    bool substract  (Matrix &A);
     bool scale (const float &n);
-    
+    bool multiply   (Matrix &A);
+    bool transpose  ();
+    bool inverse    ();
+    bool inverseLow ();
+    bool cholesky   (bool zero=true);
+
+    static bool copy       (Matrix &Dest, Matrix &Orig); // copy Orig into Dest
     static bool add        (Matrix &A, Matrix &B, Matrix &R);
     static bool substract  (Matrix &A, Matrix &B, Matrix &R);
     static bool multiply   (Matrix &A, Matrix &B, Matrix &R);
+    static bool scale      (const float &n, Matrix &A, Matrix &R);
     static bool transpose  (Matrix &A, Matrix &R);
-    static bool inverse    (Matrix &A);
-    static bool inverseLow (Matrix &L);
     static bool cholesky   (Matrix &A, Matrix &L);
-    static bool cholesky   (Matrix &A, bool zero=true);
+    static bool inverse    (Matrix &A, Matrix &R);
+    static bool inverseLow (Matrix &L, Matrix &R);
 
     void print ();
     
@@ -56,6 +67,11 @@ class Matrix
     float *_data;
 };
 
+    // uniform scaling
+    Matrix & operator *(const float &n, Matrix &A)
+    {
+      
+    }
 }
 
 #endif // B_MATRIX_H 
