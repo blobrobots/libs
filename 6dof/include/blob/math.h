@@ -55,7 +55,7 @@ template <typename T>
 class Vector3d
 {
 
-public:
+  public:
     T x, y, z;
 
     // trivial ctor
