@@ -67,11 +67,6 @@ class Matrix
     float *_data;
 };
 
-    // uniform scaling
-    Matrix & operator *(const float &n, Matrix &A)
-    {
-      
-    }
 }
 
 #endif // B_MATRIX_H 
