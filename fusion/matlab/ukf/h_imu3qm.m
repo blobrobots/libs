@@ -1,0 +1,36 @@
+function output = h_imu3qm(x)
+% x = [q0, q1, q2, q3, gbx, gby, gbx]
+% z = [mx, my, mz]
+
+% normalize
+q0 = x(1); q1 = x(2); q2 = x(3); q3 = x(4);
+
+% estimated direction of gravity and flux (NED)
+output = [ q0*q0 + q1*q1 - q2*q2 - q3*q3; % mx
+           2*(q1*q2 - q0*q3);             % my
+           2*(q0*q2 + q1*q3);          ]; % mz
+end
+
+% TODO: Falta declinacion magnetica
+
+% notas:
+% quaternion conjugado:
+% q' = (q0 - q1*i - q2*j - q3*k)
+% multiplicacion quaterniones (Hamilton Product) 
+% http://en.wikipedia.org/wiki/Quaternion#Hamilton_product):
+% q = (q0 + q1*i + q2*j + q3*k)
+% p = (p0 + p1*i + p2*j + p3*k)
+% r = (r0 + r1*i + r2*j + r3*k)
+% q = p x r ->
+% q0 = (p0*r0 - p1*r1 - p2*r2 - p3*r3) = (r0*p0 - r1*p1 - r2*p2 - r3*p3)
+% q1 = (p0*r1 + p1*r0 + p2*r3 - p3*r2) = (r0*p1 + r1*p0 - r2*p3 + r3*p2) 
+% q2 = (p0*r2 - p1*r3 + p2*r0 + p3*r1) = (r0*p2 + r1*p3 + r2*p0 - r3*p1)
+% q3 = (p0*r3 + p1*r2 - p2*r1 + p3*r0) = (r0*p3 - r1*p2 + r2*p1 + r3*p0)
+% 
+% calculo de medidas:
+% medida del campo magnetico normalizado en ejes de navegacion: [1 0 0]
+% quaternion equivalente: h = (0 1*i 0*j 0*k)
+% medida esperada de los magnetometros normalizados (rotacion a ejes cuerpo):
+% qm = q'*h*q =
+% 0 + (q0*q0 + q1*q1 - q2*q2 - q3*q3)*i + 2*(q1*q2 - q0*q3)*j + 2*(q0*q2 + q1*q3)*k;
+% TODO: Falta declinacion magnetica
