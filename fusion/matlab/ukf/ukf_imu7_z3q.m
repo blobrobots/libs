@@ -85,11 +85,11 @@ if(exist('result_file') == 1)
    rf_id = fopen(result_file,'w');
 end
 if(df_id >= 0)
-   fprintf(df_id, 'yaw gx gy gz ax ay az mx my mz (dt=%f)\n',dt);
+   fprintf(df_id, 'gx gy gz ax ay az mx my mz (dt=%f)\n',dt);
 end
 if(rf_id >= 0)
    fprintf(rf_id, 'dt=%f dtacc=%f dtmag=%f racc=%f rmag=%f qbg=%f\n',dt,dtacc,dtmag,racc,rmag,qbg);
-   fprintf(rf_id, 'q0 q1 q2 q3 gbx gby gbz roll pitch yaw\n');
+   fprintf(rf_id, 'q0 q1 q2 q3 gbx gby gbz roll pitch yaw roll_gt pitch_gt yaw_gt\n');
 end
 
 %% loop
@@ -124,12 +124,13 @@ for t=1:time
 
         %% prediction step
         [x,P,X,Xs]= ukf_predict(dt,x,P,f,u,Q); % prediction step
-        
+
         %% update step
         if(mod(t,dtacc*1000) == 0)
            h=@(x,args)h_imu3qa(x);
            z = [axn; ayn; azn]; % measurements
            [x, P] = ukf_update(dt,x,P,h,z,Ra,X,Xs);  % ukf predict + measurement update
+           
            X=[]; Xs=[]; % to avoid reusing it for magnetometers
         end
         if(mod(t,dtmag*1000) == 0)
@@ -137,6 +138,7 @@ for t=1:time
            z = [mxn; myn; mzn]; % measurements
            [x, P] = ukf_update(dt,x,P,h,z,Rm,X,Xs);  % ukf predict + measurement update
         end
+        
         
         %% re-normalize just in case
         qnorm = sqrt(x(1)*x(1) + x(2)*x(2) + x(3)*x(3) + x(4)*x(4));
@@ -150,7 +152,7 @@ for t=1:time
             fprintf(df_id, '%f %f %f %f %f %f %f %f %f\n', imu_gx(t), imu_gy(t), imu_gz(t), imu_ax(t), imu_ay(t), imu_az(t), imu_mx(t), imu_my(t), imu_mz(t));
         end
         if(rf_id >= 0)
-            fprintf(rf_id, '%f %f %f %f %f %f %f %f %f %f\n', x(1), x(2), x(3), x(4), x(5), x(6), x(7), atan2(2*(x(1)*x(2) + x(3)*x(4)), 1 - 2*(x(2)*x(2) + x(3)*x(3))), asin(2*(x(1)*x(3) - x(2)*x(4))), atan2(2*(x(1)*x(4) + x(2)*x(3)), 1 - 2*(x(3)*x(3) + x(4)*x(4))));
+            fprintf(rf_id, '%f %f %f %f %f %f %f %f %f %f %f %f %f\n', x(1), x(2), x(3), x(4), x(5), x(6), x(7), atan2(2*(x(1)*x(2) + x(3)*x(4)), 1 - 2*(x(2)*x(2) + x(3)*x(3))), asin(2*(x(1)*x(3) - x(2)*x(4))), atan2(2*(x(1)*x(4) + x(2)*x(3)), 1 - 2*(x(3)*x(3) + x(4)*x(4))), imu(2).data(t,10), imu(2).data(t,11), imu(2).data(t,12));
         end
     end
     

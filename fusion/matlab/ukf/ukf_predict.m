@@ -1,4 +1,4 @@
-%% ukf_update.m
+%% ukf_predict.m
 %  author: adrian jimenez gonzalez
 %  email:  blob.robotics@gmail.com
 %  date:   15-jan-2015
