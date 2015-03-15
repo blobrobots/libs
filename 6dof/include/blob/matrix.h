@@ -18,53 +18,55 @@ namespace blob {
 class Matrix
 {
   public:
-    Matrix (uint8_t rows = 0, uint8_t cols = 0, float *data = NULL) { _nrows=rows; _ncols=cols; _data=data; }
-    uint8_t nrows () { return _nrows; }
-    uint8_t ncols () { return _ncols; }
-    uint16_t length () { return (uint16_t)_ncols*_nrows; }
+    Matrix (uint8_t rows = 0, uint8_t cols = 0, real_t *data = NULL) { _nrows=rows; _ncols=cols; _data=data; }
+    void refurbish (uint8_t rows = 0, uint8_t cols = 0, real_t *data = NULL) { _nrows=rows; _ncols=cols; if(data) _data=data; }
+    
+    uint8_t nrows () const { return _nrows; }
+    uint8_t ncols () const { return _ncols; }
+    uint16_t length () const { return (uint16_t)_ncols*_nrows; }
  
-    float *data () {return _data;};
+    real_t *data () {return _data;};
     
     bool fillRows (Matrix &A, uint8_t row=0, uint8_t nrows=1);
     bool fillCols (Matrix &A, uint8_t col=0, uint8_t ncols=1);
-    bool zero () {memset(_data,0,sizeof(float)*_nrows*_ncols); return true;}
+    
+    bool zero () {memset(_data,0,sizeof(real_t)*_nrows*_ncols); return true;}
     bool eye  ();
 
-    float & operator()(const uint8_t row, const uint8_t col);
-    const float & operator()(const uint8_t row, const uint8_t col) const;
-    float & operator[](int i);
-    const float & operator[](int i) const;
-    Matrix & operator+=(Matrix &A);
-    Matrix & operator-=(Matrix &A);
-    Matrix & operator*=(const float &n);
-    Matrix & operator*=(Matrix &A);
+    real_t & operator()(const uint8_t row, const uint8_t col);
+    const real_t & operator()(const uint8_t row, const uint8_t col) const;
+    real_t & operator[](int i);
+    const real_t & operator[](int i) const;
+    Matrix & operator+=(const Matrix &A);
+    Matrix & operator-=(const Matrix &A);
+    Matrix & operator*=(const real_t &n);
 
-    bool copy       (Matrix &A);
-    bool add        (Matrix &A);
-    bool substract  (Matrix &A);
-    bool scale (const float &n);
-    bool multiply   (Matrix &A);
-    bool transpose  ();
-    bool inverse    ();
-    bool inverseLow ();
-    bool cholesky   (bool zero=true);
+    bool copy         (const Matrix &A, uint8_t startrow=0, uint8_t startcol=0);
+    bool add          (const Matrix &A, uint8_t startrow=0, uint8_t startcol=0);
+    bool substract    (const Matrix &A, uint8_t startrow=0, uint8_t startcol=0);
+    bool scale        (const real_t &n);
+    bool transpose    ();
+    bool inverse      ();
+    bool inverseLow   ();
+    bool cholesky     (bool zero=true);
 
-    static bool copy       (Matrix &Dest, Matrix &Orig); // copy Orig into Dest
-    static bool add        (Matrix &A, Matrix &B, Matrix &R);
-    static bool substract  (Matrix &A, Matrix &B, Matrix &R);
-    static bool multiply   (Matrix &A, Matrix &B, Matrix &R);
-    static bool scale      (const float &n, Matrix &A, Matrix &R);
-    static bool transpose  (Matrix &A, Matrix &R);
-    static bool cholesky   (Matrix &A, Matrix &L);
-    static bool inverse    (Matrix &A, Matrix &R);
-    static bool inverseLow (Matrix &L, Matrix &R);
+//    static bool copy         (Matrix &Dest, const Matrix &Orig, uint8_t startrow=0, uint8_t startcol=0); // copy Orig into Dest
+    static bool add          (const Matrix &A, const Matrix &B, Matrix &R);
+    static bool substract    (const Matrix &A, const Matrix &B, Matrix &R);
+    static bool multiply     (const Matrix &A, const Matrix &B, Matrix &R);
+    static bool multiplyDiag (const Matrix &A, const  Matrix &B, Matrix &R);
+    static bool scale        (const real_t &n, const Matrix &A, Matrix &R);
+    static bool transpose    (const Matrix &A, Matrix &R);
+    static bool cholesky     (const Matrix &A, Matrix &L);
+    static bool inverse      (const Matrix &A, Matrix &R);
+    static bool inverseLow   (const Matrix &L, Matrix &R);
 
     void print ();
     
   private:
     uint8_t _nrows;
     uint8_t _ncols;
-    float *_data;
+    real_t *_data;
 };
 
 }

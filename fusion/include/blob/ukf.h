@@ -7,49 +7,62 @@
 #ifndef B_UKF_H
 #define B_UKF_H
 
-#include <blob/types.h>
+#include <blob/matrix.h>
 
-// auxiliary functions
-#define ukf_length(x)   sizeof(x)/sizeof(x[0])
-// variable initialization functions
-#define ukf_x_alloc(l)  float x[l]
-#define ukf_X_alloc(l)  float X[((2*l+1)*l)]
-#define ukf_P_alloc(l)  float P[(l*l)]
-#define ukf_Xs_alloc(l) float Xs[((2*l+1)*l)]
+#if !defined(BLOB_UKF_MAX_STATE_LENGTH)
+ #define BLOB_UKF_MAX_STATE_LENGTH 20
+#endif
 
-#define ukf_alloc(l)   float x[l], X[((2*l+1)*l)], P[(l*l)], Xs[((2*l+1)*l)], wm[(2*l+1)],wc[(2*l+1)],aux[(l*l)]
+#if !defined(BLOB_UKF_MAX_Z_LENGTH)
+ #define BLOB_UKF_MAX_Z_LENGTH 10
+#endif
+
+#if (BLOB_UKF_MAX_STATE_LENGTH > BLOB_UKF_MAX_Z_LENGTH)
+ #define BLOB_UKF_MAX_LENGTH BLOB_UKF_MAX_STATE_LENGTH
+#else
+ #define BLOB_UKF_MAX_LENGTH BLOB_UKF_MAX_Z_LENGTH 
+#endif
 
 namespace blob {
 
-typedef void (*ukf_f)(float *x, float *u, const float dt);
-typedef void (*ukf_h)(float *x, float *z);
+typedef void (*ukf_function)(real_t *x, void *args, real_t * res);
 
 class UKF
 {
   public:
-    UKF (uint8_t states=0, float *x=NULL, float *P=NULL, float *X=NULL, float *Xs=NULL, float *aux=NULL);
+    UKF (uint8_t states=0, real_t * x_init=NULL);
    
-    void predict ();
-    void update  ();
-    void ut      ();
-    void sigmas  ();
+    bool predict (ukf_function function, void *args, real_t *r);
+    bool update  (ukf_function function, void *args, const uint8_t m, real_t *z, real_t *q);
+    void print   ();
 
-    uint8_t getNumStates ();
-    float *getState ();
-    void getState (float * state);
-    void getState (uint8_t index);
+    uint8_t getNumStates () {return _n;}
+    real_t * getState     () {return _x;}
+    void    getState (real_t * state) {memcpy(state, _x, _n*sizeof(real_t));}
+    real_t   getState (uint8_t index) {return _x[index];}
 
   private:
 
-    Matrix _x, _P, _X, _Xs, _wm, _wc, _Aux; // internal variables
-    float _n;                     // number of states
-    float _alpha;                 // tunable
-    float _ki;                    // tunable
-    float _beta;                  // tunable
-    float _lambda;                // factor
-    float _c;                     // scaling factor
-    Matrix _Wm;                   // weights for means
-    Matrix _Wc;                   // weights for covariance
+    bool ut (ukf_function function, void *args, Matrix & X, const Matrix & R, Matrix & x_u, Matrix & P_u, Matrix & X_u, Matrix & Xs_u);
+    
+    bool sigmas  (Matrix & x, Matrix &P, Matrix & X);
+
+    real_t _n;       // number of states
+    real_t _alpha;   // tunable
+    real_t _ki;      // tunable
+    real_t _beta;    // tunable
+    real_t _lambda;  // factor
+    real_t _c;       // scaling factor
+    real_t _wm[2*BLOB_UKF_MAX_STATE_LENGTH+1]; // weights for means
+    real_t _wc[2*BLOB_UKF_MAX_STATE_LENGTH+1]; // weights for covariance
+
+    bool _updated;
+
+    real_t _x[BLOB_UKF_MAX_STATE_LENGTH];
+    real_t _P[BLOB_UKF_MAX_STATE_LENGTH*BLOB_UKF_MAX_STATE_LENGTH];
+
+    real_t _X [((2*BLOB_UKF_MAX_STATE_LENGTH+1)*BLOB_UKF_MAX_STATE_LENGTH)]; 
+    real_t _Xs[((2*BLOB_UKF_MAX_STATE_LENGTH+1)*BLOB_UKF_MAX_STATE_LENGTH)];
 };
 }
 

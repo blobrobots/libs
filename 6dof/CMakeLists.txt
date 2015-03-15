@@ -5,7 +5,7 @@ endif(${PLATFORM} MATCHES "Arduino")
 
 cmake_minimum_required (VERSION 2.8.5)
 cmake_policy(VERSION 2.8.5)
-project(fusion)
+project(6dof)
 
 # flags for debug version: "-DCMAKE_BUILD_TYPE=Debug/Release"
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -18,15 +18,13 @@ endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 # define dependencies path
 set(BLOB_TYPE_DIR ../types)
-set(BLOB_6DOF_DIR ../6dof)
 
 # add include directories (-I)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${BLOB_TYPE_DIR}/include)
-include_directories(${BLOB_6DOF_DIR}/include)
 
 # sources
-set(LIB_SRC src/ukf.cpp)
+set(LIB_SRC src/matrix.cpp)
 
 # output files path: libs at /lib and executables at bin/
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
@@ -34,17 +32,16 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 # build the shared and static libraries
 if(${PLATFORM} MATCHES "Arduino")
-  generate_arduino_library (blob_fusion
+  generate_arduino_library (blob_6dof
     SRCS ${LIB_SRC}
     BOARD leonardo)
 else(${PLATFORM} MATCHES "Arduino")
-  add_library(blob_fusion SHARED ${LIB_SRC})
-  add_library(blob_fusion_static STATIC ${LIB_SRC})
+  add_library(blob_6dof SHARED ${LIB_SRC})
+  add_library(blob_6dof_static STATIC ${LIB_SRC})
 endif(${PLATFORM} MATCHES "Arduino")
 
 # compile tests and dependencies only if standalone compilation
 string(FIND ${CMAKE_BINARY_DIR} ${PROJECT_NAME} IS_PROJECT) 
 if("${IS_PROJECT}" GREATER -1)
   add_subdirectory(test) # compile tests
-  add_subdirectory(${BLOB_6DOF_DIR} "${CMAKE_CURRENT_BINARY_DIR}/6dof") # compile 6dof library
 endif("${IS_PROJECT}" GREATER -1)

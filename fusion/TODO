@@ -1,0 +1,5 @@
+- add numeric instability protection before cholesky (so we can use float)
+- change real_t to float instead of double
+- revise and optimize memory allocation
+- re-tune test
+- add tests for euler-attitude and navigation
