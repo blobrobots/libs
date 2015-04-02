@@ -6,15 +6,12 @@
  **************************************/
 #include "blob/matrix.h"
 
-#define BLOB_MATRIX_MAX_ROWS 50
-#define BLOB_MATRIX_MAX_COLS 50
-
 #if defined(__linux__)
 #include <iostream>
 #include <math.h>
 #endif
 
-float & blob::Matrix::operator()(const uint8_t row, const uint8_t col)
+real_t & blob::Matrix::operator()(const uint8_t row, const uint8_t col)
 {
   if(_data && (row<_nrows) && (col<_ncols))
     return _data[_ncols*row + col];
@@ -22,7 +19,7 @@ float & blob::Matrix::operator()(const uint8_t row, const uint8_t col)
     return _data[0];
 }
 
-const float & blob::Matrix::operator()(const uint8_t row, const uint8_t col) const
+const real_t & blob::Matrix::operator()(const uint8_t row, const uint8_t col) const
 {
   if(_data && (row<_nrows) && (col<_ncols))
     return _data[_ncols*row + col];
@@ -30,7 +27,7 @@ const float & blob::Matrix::operator()(const uint8_t row, const uint8_t col) con
     return _data[0];
 }
 
-float & blob::Matrix::operator[](int i)
+real_t & blob::Matrix::operator[](int i)
 {
   if(_data && (i<_nrows*_ncols))
     return _data[i];
@@ -38,7 +35,7 @@ float & blob::Matrix::operator[](int i)
     return _data[0];
 }
 
-const float & blob::Matrix::operator[](int i) const 
+const real_t & blob::Matrix::operator[](int i) const 
 {
   if(_data && (i<_nrows*_ncols))
     return _data[i];
@@ -46,70 +43,91 @@ const float & blob::Matrix::operator[](int i) const
     return _data[0];
 }
 
-blob::Matrix & blob::Matrix::operator+=(blob::Matrix &A)
+blob::Matrix & blob::Matrix::operator+=(const blob::Matrix &A)
 {
   this->add(A); 
 }
 
-blob::Matrix & blob::Matrix::operator-=(blob::Matrix &A)
+blob::Matrix & blob::Matrix::operator-=(const blob::Matrix &A)
 {
   this->substract(A);
 }
 
-blob::Matrix & blob::Matrix::operator*=(const float &n)
+blob::Matrix & blob::Matrix::operator*=(const real_t &n)
 {
   this->scale(n);
 }
 
-blob::Matrix & blob::Matrix::operator*=(blob::Matrix &A)
+bool blob::Matrix::copy (const blob::Matrix &A, uint8_t startrow, uint8_t startcol)
 {
-  this->multiply(A);
-}
-
-bool blob::Matrix::copy        (blob::Matrix &A)
-{
-  if(_data && A.data() && (A.nrows()==_nrows) && (A.ncols()==_ncols))
+  bool retval = false;
+  if((_nrows >= startrow+A.nrows())&&(_ncols >= startcol+A.ncols()))
   {
-    memcpy(_data, A.data(), A.length()*sizeof(float));
+    for (int i = startrow; i<startrow+A.nrows(); i++)
+    {
+       memcpy(&(_data[i*_ncols + startcol]), &A(i,0), A.ncols()*sizeof(real_t));
+    }
+    retval = true;
   }
-  #if defined(__DEBUG__) & defined(__linux__)
+#if defined(__DEBUG__) & defined(__linux__)
   else
-    std::cerr << "Matrix is not square" << std::endl;
+    std::cerr << "Matrix::copy() error: " << (int)_nrows << ">=" << (int)(A.nrows()+startrow) << "?" 
+                                          << (int)_ncols << ">=" << (int)(A.ncols()+startcol) << "?" 
+                                          << std::endl;
 #endif
-}
 
-bool blob::Matrix::add        (blob::Matrix &A)
-{
-  bool retval = false;
-
-  if(_data && A.data() &&
-    (A.nrows()==_nrows) && (A.ncols()==_ncols))
-  {
-    for (int i = 0; i < _nrows*_ncols; i++) 
-    {
-      _data[i] += A[i];
-    }
-    retval = true;
-  }
   return retval;
 }
 
-bool blob::Matrix::substract  (blob::Matrix &A)
+bool blob::Matrix::add (const blob::Matrix &A, uint8_t startrow, uint8_t startcol)
 {
   bool retval = false;
-  
-  if(_data && A.data() &&
-    (A.nrows()==_nrows) && (A.ncols()==_ncols))
+  if((_nrows >= startrow+A.nrows())&&(_ncols >= startcol+A.ncols()))
   {
-    for (int i = 0; i < _nrows*_ncols; i++) 
+    for (int i = startrow; i<startrow+A.nrows(); i++)
     {
-      _data[i] -= A[i];
+      for (int j = startcol; j<startcol+A.ncols(); j++)
+      {
+        _data[i*_ncols + j] += A(i-startrow,j-startcol);
+      }
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::add() error: "  << (int)_nrows << ">=" << (int)(A.nrows()+startrow) << "?" 
+                                          << (int)_ncols << ">=" << (int)(A.ncols()+startcol) << "?" 
+                                          << std::endl;
+#endif
+
   return retval;
 }
-bool blob::Matrix::scale (const float &n)
+
+bool blob::Matrix::substract  (const blob::Matrix &A, uint8_t startrow, uint8_t startcol)
+{
+  bool retval = false;
+  if((_nrows >= startrow+A.nrows())&&(_ncols >= startcol+A.ncols()))
+  {
+    for (int i = startrow; i<startrow+A.nrows(); i++)
+    {
+      for (int j = startcol; j<startcol+A.ncols(); j++)
+      {
+        _data[i*_ncols + j] -= A(i-startrow,j-startcol);
+      }
+    }
+    retval = true;
+  }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::substract() error: "  << (int)_nrows << ">=" << (int)(A.nrows()+startrow) << "?" 
+                                                << (int)_ncols << ">=" << (int)(A.ncols()+startcol) << "?" 
+                                                << std::endl;
+#endif
+
+  return retval;
+}
+
+bool blob::Matrix::scale (const real_t &n)
 {
   bool retval = false;
   
@@ -124,53 +142,34 @@ bool blob::Matrix::scale (const float &n)
   return true;
 }
 
-bool blob::Matrix::multiply   (blob::Matrix &A)
+bool blob::Matrix::transpose ()
 {
-  bool retval = false;
-  
-  if((_nrows == A.nrows()) && (_ncols == A.ncols()))
-  {
-    float r[BLOB_MATRIX_MAX_COLS*BLOB_MATRIX_MAX_ROWS];
-    Matrix R(_nrows, _ncols,r);
-  
-    R.zero();
-
-    for (int i = 0; i < A.nrows(); i++)
-    {
-      for (int j = 0; j < A.ncols(); j++)
-      {
-        for (int k = 0; k < A.ncols(); k++)
-        {
-          R(i,j) += _data[i*_ncols+k]*A(k,j); 
-        }
-      }
-    }
-    memcpy(_data,R.data(),R.length()*sizeof(float));
-    retval = true;
+  int start, next, i;
+  real_t tmp;
+ 
+  for (start = 0; start <= _ncols*_nrows - 1; start++) {
+    next = start;
+    i = 0;
+    do {  
+      i++;
+      next = (next % _nrows)*_ncols + next/_nrows;
+    } while (next > start);
+    
+    if (next < start || i == 1) continue;
+ 
+    tmp = _data[next = start];
+    do {
+      i = (next % _nrows)*_ncols + next/_nrows;
+      _data[next] = (i == start) ? tmp : _data[i];
+      next = i;
+    } while (next > start);
   }
-  return retval;
-}
 
-bool blob::Matrix::transpose  ()
-{
-  bool retval = false;
-  
-  float r[BLOB_MATRIX_MAX_COLS*BLOB_MATRIX_MAX_ROWS];
-  Matrix R(_nrows, _ncols, r);
-  
-  R.zero();
+  i=_ncols;
+  _ncols = _nrows;
+  _nrows = i;
 
-  for (int i = 0; i < _nrows; i++)
-  {
-    for (int j = 0; j < _ncols; j++) 
-    {
-      R(j,i) = _data[i*_ncols + j];
-    }
-  }
-  memcpy(_data, R.data(), R.length()*sizeof(float));
-  retval = true;
-
-  return retval;
+  return true;
 }
 
 bool blob::Matrix::cholesky (bool zero)
@@ -179,7 +178,7 @@ bool blob::Matrix::cholesky (bool zero)
 
   if(_nrows == _ncols)
   {
-    float t;
+    real_t t;
     uint8_t n = _nrows;
     int i=0,j=0,k=0;
     for(i=0 ; i<n && retval == true; i++) 
@@ -188,22 +187,22 @@ bool blob::Matrix::cholesky (bool zero)
       {
         for(j=i; j<n; j++) 
         {
-          t = 0.f;
+          t = 0;
           for(k=0; k<i; k++)
             t += _data[j*n + k]*_data[i*n + k];
           _data[j*n+i] -= t;
         }
       }
-      if(_data[i*n + i] <= 0.f) 
+      if(_data[i*n + i] <= 0) 
       {
 #if defined(__DEBUG__) & defined(__linux__)
-        std::cerr << "Matrix is not positive definite" << std::endl;
+        std::cerr << "Matrix::cholesky() error: Matrix is not positive definite" << std::endl;
  #endif
         retval = false;
       }
       else
       {
-        t = 1.f/sqrtf(_data[i*n + i]);
+        t = 1/sqrtf(_data[i*n + i]);
         for(j = i ; j < n ; j++)
           _data[j*n + i] *= t;
       }
@@ -222,7 +221,7 @@ bool blob::Matrix::cholesky (bool zero)
   else
   {
 #if defined(__DEBUG__) & defined(__linux__)
-    std::cerr << "Matrix is not square" << std::endl;
+    std::cerr << "Matrix::cholesky() error: Matrix is not square" << std::endl;
 #endif
     retval = false;
   }
@@ -239,10 +238,10 @@ bool blob::Matrix::inverseLow ()
     uint8_t n = _nrows;
     for(int i=0; i<n; i++)
     {
-      _data[i*n + i] = 1.f/_data[i*n + i];
+      _data[i*n + i] = 1/_data[i*n + i];
       for(int j=i+1; j<n; j++)
       {
-        float t = 0.0;
+        real_t t = 0.0;
         for(int k=i; k<j; k++)
           t -= _data[j*n + k]*_data[k*n + i];
         _data[j*n + i] = t/_data[j*n + j];
@@ -250,6 +249,10 @@ bool blob::Matrix::inverseLow ()
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::inverseLow() error: Matrix is not square" << std::endl;
+#endif
   return retval;
 }
 
@@ -257,7 +260,7 @@ bool blob::Matrix::inverse ()
 {
   bool retval = false;
   
-  if((cholesky() == true) && 
+  if((cholesky(false) == true) && 
      (inverseLow()== true))
   {
   //Reconstruct inverse of A: inv(L)'*inv(L)
@@ -268,7 +271,7 @@ bool blob::Matrix::inverse ()
       for(int j=0; j<=i; j++)
       {
         int jj = n-j-1;
-        float t = 0.0;
+        real_t t = 0.0;
         for(int k=0; k<=ii; k++)
         {
           int kk = n-k-1;
@@ -290,45 +293,6 @@ bool blob::Matrix::inverse ()
   return retval;
 }
 
-bool blob::Matrix::fillRows(blob::Matrix &A, uint8_t startrow, uint8_t nrows)
-{
-  bool retval = false;
-  if((A.ncols() == _ncols)&&(A.nrows() >= nrows)&&(_nrows >= startrow+nrows))
-  {
-    memcpy(&(_data[_ncols*startrow]), A.data(), nrows*_ncols*sizeof(float));
-  }
-#if defined(__DEBUG__)&&defined(__linux__)
-  else
-    std::cerr << "Matrix::fillRows() error: "<< (int)A.ncols() << "==" << (int)(_ncols) << "? "
-                                             << (int)A.nrows() << ">=" << (int)nrows << "? "
-                                             << (int)_nrows << ">=" << (int)(nrows+startrow) << "?" 
-                                             << std::endl;
-#endif
-
-  return retval;
-}
-
-bool blob::Matrix::fillCols(blob::Matrix &A, uint8_t startcol, uint8_t ncols)
-{
-  bool retval = false;
-  if((A.nrows() == _nrows)&&(A.ncols() >= ncols)&&(_ncols >= startcol+ncols))
-  {
-    for (int i = 0; i<_nrows; i++)
-    {
-       memcpy(&(_data[i*_ncols + startcol]), &(A.data()[i*A.ncols()]), ncols*sizeof(float));
-    }
-    retval = true;
-  }
-#if defined(__DEBUG__) & defined(__linux__)
-  else
-    std::cerr << "Matrix::fillCols() error: "<< (int)A.nrows() << "==" << (int)_nrows << "? " 
-                                             << (int)A.ncols() << ">=" << (int)ncols << "? "
-                                             << (int)_ncols << ">=" << (int)(ncols+startcol) << "?" 
-                                             << std::endl;
-#endif //defined(__DEBUG__) & defined(__linux__)
-  return retval;
-}
-
 bool blob::Matrix::eye()
 {
   bool retval = false;
@@ -337,25 +301,40 @@ bool blob::Matrix::eye()
     this->zero();
     for (int i=0; i<_nrows; i++)
     {
-      _data[i*_ncols + i] = 1.f;
+      _data[i*_ncols + i] = 1;
     }
-    return true;
-  }
-}
-
-bool blob::Matrix::copy (blob::Matrix  &Dest, blob::Matrix &Orig)
-{
-  bool retval = false;
-  if(Dest.data() && Orig.data() &&
-    (Dest.nrows() == Orig.nrows()) && (Dest.ncols() == Orig.ncols()))
-  {
-    memcpy(Dest.data(),Orig.data(),Orig.length()*sizeof(float));
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::inverseLow() error: Matrix is not square" << std::endl;
+#endif
+  
   return retval;
-}    
+}
 
-bool blob::Matrix::add (blob::Matrix  &A, blob::Matrix &B, blob::Matrix &R)
+/*bool blob::Matrix::copy (blob::Matrix  &Dest, const blob::Matrix &Orig, uint8_t startrow, uint8_t startcol)
+{
+  bool retval = false;
+  if((Dest.nrows() >= startrow+Orig.nrows())&&(Dest.ncols() >= startcol+Orig.ncols()))
+  {
+    for (int i = startrow; i<startrow+Orig.nrows(); i++)
+    {
+       memcpy(&Dest(i,startcol), &Orig(i,0), Orig.ncols()*sizeof(real_t));
+    }
+    retval = true;
+  }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::copy() error: " << (int)Dest.nrows() << ">=" << (int)(Orig.nrows()+startrow) << "?" 
+                                          << (int)Dest.ncols() << ">=" << (int)(Orig.ncols()+startcol) << "?" 
+                                          << std::endl;
+#endif
+
+  return retval;
+}
+*/
+bool blob::Matrix::add (const blob::Matrix  &A, const blob::Matrix &B, blob::Matrix &R)
 {
   bool retval = false;
   if((A.nrows() == B.nrows()) && (A.ncols() == B.ncols()) &&
@@ -367,10 +346,18 @@ bool blob::Matrix::add (blob::Matrix  &A, blob::Matrix &B, blob::Matrix &R)
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::add() error: "  << (int)A.nrows() << "==" << (int)B.nrows() << "?" 
+                                          << (int)A.ncols() << "==" << (int)B.ncols() << "?" 
+                                          << (int)A.nrows() << "==" << (int)R.nrows() << "?" 
+                                          << (int)A.ncols() << "==" << (int)R.ncols() << "?" 
+                                          << std::endl;
+#endif
   return retval;
 }
 
-bool blob::Matrix::substract (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
+bool blob::Matrix::substract (const blob::Matrix &A, const blob::Matrix &B, blob::Matrix &R)
 {
   bool retval = false;
   if((A.nrows() == B.nrows()) && (A.ncols() == B.ncols()) &&
@@ -382,10 +369,19 @@ bool blob::Matrix::substract (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::substract() error: " << (int)A.nrows() << "==" << (int)B.nrows() << "?" 
+                                               << (int)A.ncols() << "==" << (int)B.ncols() << "?" 
+                                               << (int)A.nrows() << "==" << (int)R.nrows() << "?" 
+                                               << (int)A.ncols() << "==" << (int)R.ncols() << "?" 
+                                               << std::endl;
+#endif
+
   return retval;
 }
 
-bool blob::Matrix::scale (const float &n, blob::Matrix &A, blob::Matrix &R)
+bool blob::Matrix::scale (const real_t &n, const blob::Matrix &A, blob::Matrix &R)
 {
   bool retval = false;
   if((A.nrows() == R.nrows()) && (A.ncols() == R.ncols()))
@@ -396,22 +392,29 @@ bool blob::Matrix::scale (const float &n, blob::Matrix &A, blob::Matrix &R)
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::scale() error: " << (int)A.nrows() << "==" << (int)R.nrows() << "?" 
+                                           << (int)A.ncols() << "==" << (int)R.ncols() << "?" 
+                                           << std::endl;
+#endif
+
   return retval;
 }
 
-
-bool blob::Matrix::multiply (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
+bool blob::Matrix::multiply (const blob::Matrix &A, const blob::Matrix &B, blob::Matrix &R)
 {
   bool retval = false;
-  if((A.nrows() == B.ncols()) && (A.ncols() == B.nrows()) &&
-     (R.nrows() == A.nrows()) && (R.ncols() == B.ncols()))
+  if((A.ncols() == B.nrows()) &&
+     (R.nrows() == A.nrows()) && 
+     (R.ncols() == B.ncols()))
   {
-    for (int i = 0; i < A.nrows(); i++)
+    for (int i = 0; i < R.nrows(); i++)
     {
-      for (int j = 0; j < B.ncols(); j++)
+      for (int j = 0; j < R.ncols(); j++)
       {
         uint8_t index = i*R.ncols() + j;
-        R[index] = 0.f;
+        R[index] = 0;
         for (int k = 0; k < A.ncols(); k++)
         {
           R[index] += A[i*A.ncols()+k]*B[k*B.ncols()+j]; 
@@ -420,13 +423,65 @@ bool blob::Matrix::multiply (blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::multiply() error: " << (int)A.ncols() << "==" << (int)B.nrows() << "?" 
+                                              << (int)R.nrows() << "==" << (int)A.nrows() << "?" 
+                                              << (int)R.ncols() << "==" << (int)B.ncols() << "?" 
+                                              << std::endl;
+#endif
+
   return retval;
 }
 
-bool blob::Matrix::transpose (blob::Matrix &A, blob::Matrix &R)
+bool blob::Matrix::multiplyDiag (const Matrix &A, const Matrix &D, Matrix &R)
 {
   bool retval = false;
-  if((A.nrows() == R.nrows()) && (A.ncols() == R.ncols()))
+  
+  // M*D
+  if (((D.nrows() == A.ncols())&&(D.ncols() == 1))||
+      ((D.ncols() == A.ncols())&&(D.nrows() == 1))&&
+      ((R.ncols() == A.ncols())&&(R.nrows() == D.length())))
+  {
+    for (int i = 0; i < R.nrows(); i++)
+    {
+      for (int j = 0; j < R.ncols(); j++)
+      {
+        R(i,j) = A(i,j)*D[j];
+      }
+    }
+    retval = true;
+  }
+  // D*M
+  else if (((D.nrows() == A.nrows())&&(D.ncols() == 1))||
+           ((D.ncols() == A.nrows())&&(D.nrows() == 1))&&
+           ((R.nrows() == A.nrows())&&(R.ncols() == D.length())))
+  {
+    for (int i = 0; i < R.nrows(); i++)
+    {
+      for (int j = 0; j < R.ncols(); j++)
+      {
+        R(i,j) = A(i,j)*D[i];
+      }
+    }
+    retval = true;
+  }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::multiplyDiag() error: " << (int)A.ncols() << "/" << (int)A.nrows() << "==" 
+                                                  << (int)R.ncols() << "/" << (int)R.nrows() << "==" 
+                                                  << (int)D.nrows() << "/" << (int)D.ncols() << "?" 
+                                                  << (int)D.nrows() << "/" << (int)D.ncols() << "== 1?" 
+                                                  << std::endl;
+#endif
+
+  return retval;
+}
+
+bool blob::Matrix::transpose (const blob::Matrix &A, blob::Matrix &R)
+{
+  bool retval = false;
+  if((A.nrows() == R.ncols()) && (A.ncols() == R.nrows()))
   {
     for (int i = 0; i < A.nrows(); i++)
     {
@@ -437,14 +492,21 @@ bool blob::Matrix::transpose (blob::Matrix &A, blob::Matrix &R)
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::transpose() error: " << (int)A.nrows() << "==" << (int)R.ncols() << "?" 
+                                               << (int)A.ncols() << "==" << (int)R.nrows() << "?" 
+                                               << std::endl;
+#endif
+
   return retval;
 }
 
-bool blob::Matrix::cholesky (blob::Matrix &A, blob::Matrix &L)
+bool blob::Matrix::cholesky (const blob::Matrix &A, blob::Matrix &L)
 {
   bool retval = true;
   
-  float t;
+  real_t t;
   uint8_t n = A.nrows();
   L.zero();
   if((A.nrows() == A.ncols()) &&
@@ -455,27 +517,33 @@ bool blob::Matrix::cholesky (blob::Matrix &A, blob::Matrix &L)
     {
       for (int j = 0; j < (i+1); j++)
       {
-        float s = 0;
+        real_t s = 0;
         for (int k = 0; k < j; k++)
         {
           s += L[i*n + k]*L[j*n + k];
         }
         if(i==j && (A[i*n + i] - s) <=0)
         {
+#if defined(__DEBUG__) & defined(__linux__)
+          std::cerr << "Matrix::cholesky() error: Matrix is not positive definite" << std::endl;
+#endif
           return false;
         }
         else
         {
           L[i*n + j] = (i == j)?
-          sqrtf(A[i*n + i] - s) : (1.f/L[j*n + j]*(A[i*n + j] - s));
+          sqrtf(A[i*n + i] - s) : (1/L[j*n + j]*(A[i*n + j] - s));
         } 
       }
     }
+#if defined(__DEBUG__) & defined(__linux__)
+        std::cerr << "Matrix::cholesky() error: Matrix is not square" << std::endl;
+#endif
     return retval;
   }
 }
 
-bool blob::Matrix::inverseLow (blob::Matrix &L, blob::Matrix &R)
+bool blob::Matrix::inverseLow (const blob::Matrix &L, blob::Matrix &R)
 {
   // Inverse assuming Lower triangular matrix
   bool retval = false;
@@ -488,10 +556,10 @@ bool blob::Matrix::inverseLow (blob::Matrix &L, blob::Matrix &R)
     R.zero();
     for(int i=0; i<n; i++)
     {
-      R[i*n + i] = 1.f/L[i*n + i];
+      R[i*n + i] = 1/L[i*n + i];
       for(int j=i+1; j<n; j++)
       {
-        float t = 0.0;
+        real_t t = 0.0;
         for(int k=i; k<j; k++)
           t -= L[j*n + k]*L[k*n + i];
         R[j*n + i] = t/L[j*n + j];
@@ -499,10 +567,18 @@ bool blob::Matrix::inverseLow (blob::Matrix &L, blob::Matrix &R)
     }
     retval = true;
   }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::inverseLow() error: " << (int)L.nrows() << "==" << (int)L.ncols() << "?" 
+                                                << (int)R.nrows() << "==" << (int)L.nrows() << "?" 
+                                                << (int)R.ncols() << "==" << (int)L.ncols() << "?" 
+                                                << std::endl;
+#endif
+
   return retval;
 }
 
-bool blob::Matrix::inverse (blob::Matrix &A, blob::Matrix &R)
+bool blob::Matrix::inverse (const blob::Matrix &A, blob::Matrix &R)
 {
   bool retval = false;
   
@@ -517,7 +593,7 @@ bool blob::Matrix::inverse (blob::Matrix &A, blob::Matrix &R)
       for(int j=0; j<=i; j++)
       {
         int jj = n-j-1;
-        float t = 0.0;
+        real_t t = 0.0;
         for(int k=0; k<=ii; k++)
         {
           int kk = n-k-1;
