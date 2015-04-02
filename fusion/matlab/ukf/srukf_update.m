@@ -4,7 +4,7 @@
 %  date:   15-jan-2015
 %  brief:  function to update measurement in a ukf filter
 
-function [x,P] = ukf_update(dt,x,P,h,z,R,X,Xs)
+function [x,S] = ukf_update(dt,x,S,h,z,Sr,X,Xs)
 % Unscented Kalman Filter - UKF 
 % Update step:
 % [x, P] = ukf_update(dt,x,P,h,z,Q,R) returns posterior state estimate, x
@@ -13,14 +13,15 @@ function [x,P] = ukf_update(dt,x,P,h,z,R,X,Xs)
 %           z_k   = h(x_k) + v_k
 % where v ~ N(0,R) meaning v is gaussian noise with covariance R
 % Inputs:   dt: time step
+%           x:  posterior state estimate at time t
+%           S:  posterior state covariance square root at time t
 %           h:  function handle for h(x)
 %           z:  current measurement
-%           Q:  process noise covariance 
-%           R:  measurement noise covariance
+%           Sr:  measurement noise covariance square root
 %           X:  prior unscented transformation
 %           Xs: prior unscented transformation standard deviation
 % Output:   x:  posterior state estimate at time t
-%           P:  posterior state covariance at time t
+%           S:  posterior state covariance square root at time t
 %
 % Reference: Julier, SJ. and Uhlmann, J.K., Unscented Filtering and
 % Nonlinear Estimation, Proceedings of the IEEE, Vol. 92, No. 3,
@@ -45,13 +46,14 @@ m=numel(z);
 hargs.dt=dt;                                    %number of measurements
 
 if((exist('X') ~= 1)||(exist('Xs') ~= 1)||(isempty(X))||(isempty(Xs)))
-   X = sigmas(x,P,c);                            %sigma points around x1
+   X = sigmas(x,S,c);                            %sigma points around x1
    Xs = X-x(:,ones(1,size(X,2)));                %deviation of X1
 end
 
-[z1,Z1,P2,Z2] = ut(h, hargs, X, Wm, Wc, m, R);  %unscented transformation of measurments
-P12 = Xs*diag(Wc)*Z2';                          %transformed cross-covariance
-K = P12*inv(P2);                                
+[z1,Z1,S2,Z2] = ut(h, hargs, X, Wm, Wc, m, Sr);  %unscented transformation of measurments
+P12 = Xs*diag(Wc)*Z2';                           %transformed cross-covariance
+U = P12*inv(S2');
+K = U*inv(S2);                                
 
 x = x + K*(z - z1);                              %state update
-P = P - K*P12';                                  %covariance update
+S = cholupdate(S,U,'-');                         %covariance update

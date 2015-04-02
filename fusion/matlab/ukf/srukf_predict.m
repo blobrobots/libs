@@ -4,7 +4,7 @@
 %  date:   15-jan-2015
 %  brief:  function to update measurement in a ukf filter
 
-function [x,P,X,Xs]=ukf_predict(dt,x,P,f,u,Q)
+function [x,S,X,Xs]=ukf_predict(dt,x,S,f,u,Q)
 % Unscented Kalman Filter - UKF 
 % Prediction step:
 % [x, P] = ukf_predict(f,x,P) returns a prior state estimate, x and state 
@@ -42,12 +42,12 @@ c = sqrt(c);
 fargs.u = u;
 fargs.dt = dt;
 
-X = sigmas(x,P,c);                            %sigma points around x
+X = srsigmas(x,S,c);                            %sigma points around x
 
-[x1,X1,P1,X1s] = ut(f,fargs,X,Wm,Wc,L,Q);  %unscented transformation of process
+[x1,X1,S1,X1s] = srut(f,fargs,X,Wm,Wc,L,Q);  %unscented transformation of process
 
 x=x1;
-P=P1;
+P=S1;
 X=X1;
 Xs=X1s;
    
