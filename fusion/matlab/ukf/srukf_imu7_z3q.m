@@ -2,7 +2,7 @@
 %  author: adrian jimenez gonzalez
 %  email:  blobrobotics@gmail.com
 %  date:   15-jan-2015
-%  brief:  Example of use of the ukf library to estimate attitude
+%  brief:  Example of use of the sr-ukf library to estimate attitude
 
 %% save datasets
 %data_file = 'ukf_imu7_z3q.in';
@@ -71,7 +71,7 @@ f = @(x,args)f_imu7q(x,args.u,args.dt); % prediction equation
 h = @(x,args)h_imu3qa(x);               % measurement equation
 x = [1; 0; 0; 0; 0; 0; 0;];             % initial state q = [1 0 0 0]
 N = size(x,1);                          % number of states                           
-P = eye(N);                             % initial state covariance
+S = eye(N);                             % initial state covariance
 u = [0 0 0];                            % initial input
 z = [0;0;-1];                           % normalized measurement
 
@@ -133,13 +133,12 @@ for t=1:time
         if(mod(t,dtacc*1000) == 0)
            h=@(x,args)h_imu3qa(x);
            z = [axn; ayn; azn]; % measurements
-           [x, S] = srukf_update(dt,x,S,h,z,Sa,X,Xs);  % ukf predict + measurement update
-           X=[]; Xs=[]; % to avoid reusing it for magnetometers
+           [x, S] = srukf_update(dt,x,X,S,h,z,Sa,Sq);  % ukf predict + measurement update
         end
         if(mod(t,dtmag*1000) == 0)
            h=@(x,args)h_imu3qm(x);
            z = [mxn; myn; mzn]; % measurements
-           [x, S] = srukf_update(dt,x,S,h,z,Sm,X,Xs);  % ukf predict + measurement update
+           [x, S] = srukf_update(dt,x,X,S,h,z,Sm,Sq);  % ukf predict + measurement update
         end
         
         %% re-normalize just in case

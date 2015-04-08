@@ -1,10 +1,10 @@
-%% ut.m
+%% srut.m
 %  author: adrian jimenez gonzalez
 %  email:  blob.robotics@gmail.com
 %  date:   15-jan-2015
 %  brief:  function to perform ukf unscented transformation
 
-function [y,Y,S,Ys] = ut(func,fargs,X,Wm,Wc,n,Sr)
+function [y,Y,S,Ys] = srut(func,fargs,X,Wm,Wc,n,Sr)
 % Input:
 %        f: nonlinear map
 %        X: sigma points
@@ -15,7 +15,7 @@ function [y,Y,S,Ys] = ut(func,fargs,X,Wm,Wc,n,Sr)
 % Output:
 %        y:  transformed mean
 %        Y:  transformed sampling points
-%        P:  transformed covariance
+%        S:  transformed covariance
 %        Ys: transformed deviations
 %
 % Inspired on initial script by Yi Cao at Cranfield University, 04/01/2008
@@ -23,18 +23,19 @@ function [y,Y,S,Ys] = ut(func,fargs,X,Wm,Wc,n,Sr)
 L = size(X,2);
 y = zeros(n,1);
 Y = zeros(n,L);
-for k = 1:L                   
-    Y(:,k) = func(X(:,k),fargs);       
-    y = y + Wm(k)*Y(:,k);       
+for k = 1:L
+    Y(:,k) = func(X(:,k),fargs);
+    y = y + Wm(k)*Y(:,k);
 end
 Ys = Y - y(:,ones(1,L));
 % P  = Ys*diag(Wc)*Ys' + R; % std ukf
-[Q, R] = qr([sqrt(Wc(2))*Ys(2:end,:) Sr]);
-S=R'; % lower triangular
+[Q, R] = qr([sqrt(abs(Wc(2)))*Ys(:,2:end) Sr]', 0);
 
 csign='+';
 if(Wc(1)<0)
   csign='-';
-end;
-S = cholupdate(S,Wc(1)*Ys(1,:),csign);
+end
+
+S = cholupdate(R, sqrt(abs(Wc(1)))*Ys(:,1),csign);
+S=S'; %needed?
 

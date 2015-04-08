@@ -1,10 +1,10 @@
-%% ukf_update.m
+%% srukf_update.m
 %  author: adrian jimenez gonzalez
 %  email:  blob.robotics@gmail.com
 %  date:   15-jan-2015
 %  brief:  function to update measurement in a ukf filter
 
-function [x,S] = ukf_update(dt,x,S,h,z,Sr,X,Xs)
+function [x,S] = srukf_update(dt,x,X,S,h,z,Sr,Sq)
 % Unscented Kalman Filter - UKF 
 % Update step:
 % [x, P] = ukf_update(dt,x,P,h,z,Q,R) returns posterior state estimate, x
@@ -45,15 +45,18 @@ c = sqrt(c);
 m=numel(z);
 hargs.dt=dt;                                    %number of measurements
 
-if((exist('X') ~= 1)||(exist('Xs') ~= 1)||(isempty(X))||(isempty(Xs)))
-   X = sigmas(x,S,c);                            %sigma points around x1
-   Xs = X-x(:,ones(1,size(X,2)));                %deviation of X1
-end
+X = srsigmas(X(:,1),Sq,c);                            %sigma points around x1
+Xs = X-x(:,ones(1,size(X,2)));                %deviation of X1
 
 [z1,Z1,S2,Z2] = ut(h, hargs, X, Wm, Wc, m, Sr);  %unscented transformation of measurments
 P12 = Xs*diag(Wc)*Z2';                           %transformed cross-covariance
-U = P12*inv(S2');
-K = U*inv(S2);                                
+K = (P12/S2')/S2; % inv?
+U = K*S2;
+%U = P12*inv(S2');
+%K = U*inv(S2);
 
 x = x + K*(z - z1);                              %state update
-S = cholupdate(S,U,'-');                         %covariance update
+for i=1:size(U,2)
+    S = cholupdate(S,U(:,i),'-');                %covariance update
+end
+S = S';

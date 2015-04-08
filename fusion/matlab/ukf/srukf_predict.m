@@ -1,10 +1,10 @@
-%% ukf_update.m
+%% srukf_update.m
 %  author: adrian jimenez gonzalez
 %  email:  blob.robotics@gmail.com
 %  date:   15-jan-2015
 %  brief:  function to update measurement in a ukf filter
 
-function [x,S,X,Xs]=ukf_predict(dt,x,S,f,u,Q)
+function [x,S,X,Xs]=srukf_predict(dt,x,S,f,u,Sq)
 % Unscented Kalman Filter - UKF 
 % Prediction step:
 % [x, P] = ukf_predict(f,x,P) returns a prior state estimate, x and state 
@@ -44,10 +44,10 @@ fargs.dt = dt;
 
 X = srsigmas(x,S,c);                            %sigma points around x
 
-[x1,X1,S1,X1s] = srut(f,fargs,X,Wm,Wc,L,Q);  %unscented transformation of process
+[x1,X1,S1,X1s] = srut(f,fargs,X,Wm,Wc,L,Sq);  %unscented transformation of process
 
 x=x1;
-P=S1;
+S=S1;
 X=X1;
 Xs=X1s;
    
