@@ -4,7 +4,7 @@
 %  date:   15-jan-2015
 %  brief:  function to update measurement in a ukf filter
 
-function [x,P] = ukf_update(dt,x,P,h,z,R,X,Xs)
+function [x2,P2] = ukf_update(dt,x1,P1,h,z,R,X1,X1s)
 % Unscented Kalman Filter - UKF 
 % Update step:
 % [x, P] = ukf_update(dt,x,P,h,z,Q,R) returns posterior state estimate, x
@@ -30,7 +30,9 @@ function [x,P] = ukf_update(dt,x,P,h,z,R,X,Xs)
 % http://es.mathworks.com/matlabcentral/fileexchange/18217-learning-the-unscented-kalman-filter/content/ukf.m
 
 
-L = numel(x);                                   %numer of states
+L = numel(x1);                                   %numer of states
+N = 2*L+1;                                      %number of sigma points
+M = numel(z);                                   %numer of measurements
 alpha = 1e-3;                                   %default, tunable
 ki = 0;                                         %default, tunable
 beta = 2;                                       %default, tunable
@@ -41,17 +43,16 @@ Wc = Wm;
 Wc(1) = Wc(1)+(1-alpha^2+beta);                 %weights for covariance
 c = sqrt(c);
 
-m=numel(z);
 hargs.dt=dt;                                    %number of measurements
 
 if((exist('X') ~= 1)||(exist('Xs') ~= 1)||(isempty(X))||(isempty(Xs)))
-   X = sigmas(x,P,c);                            %sigma points around x1
-   Xs = X-x(:,ones(1,size(X,2)));                %deviation of X1
+   X1 = sigmas(x1,P1,c);                    % sigma points around prior x1
+   X1s = X1-x1(:,ones(1,N));                % deviation of prior X1
 end
 
-[z1,Z1,P2,Z2] = ut(h, hargs, X, Wm, Wc, m, R);  %unscented transformation of measurments
-P12 = Xs*diag(Wc)*Z2';                          %transformed cross-covariance
-K = P12*inv(P2);                                
+[z1,Z1,Pz,Z1s] = ut(h, hargs, X1, Wm, Wc, M, R);  %unscented transformation of measurments
+Pxz = X1s*diag(Wc)*Z1s';                            %transformed cross-covariance
+K = Pxz*inv(Pz);                                
 
-x = x + K*(z - z1);                              %state update
-P = P - K*P12';                                  %covariance update
+x2 = x1 + K*(z - z1);                              %state update
+P2 = P1 - K*Pxz';                                  %covariance update

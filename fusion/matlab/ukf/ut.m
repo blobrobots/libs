@@ -4,7 +4,7 @@
 %  date:   15-jan-2015
 %  brief:  function to perform ukf unscented transformation
 
-function [y,Y,P,Ys] = ut(func,fargs,X,Wm,Wc,n,R)
+function [y,Y,P,Ys] = ut(func,fargs,X,Wm,Wc,m,R)
 % Input:
 %        f: nonlinear map
 %        X: sigma points
@@ -20,12 +20,12 @@ function [y,Y,P,Ys] = ut(func,fargs,X,Wm,Wc,n,R)
 %
 % Inspired on initial script by Yi Cao at Cranfield University, 04/01/2008
 
-L = size(X,2);
-y = zeros(n,1);
-Y = zeros(n,L);
-for k = 1:L                   
-    Y(:,k) = func(X(:,k),fargs);       
-    y = y + Wm(k)*Y(:,k);       
+N = size(X,2);
+y = zeros(m,1);
+Y = zeros(m,N);
+for i = 1:N                   
+    Y(:,i) = func(X(:,i),fargs);       
+    y = y + Wm(i)*Y(:,i);       
 end
-Ys = Y - y(:,ones(1,L));
+Ys = Y - y(:,ones(1,N));
 P  = Ys*diag(Wc)*Ys' + R;

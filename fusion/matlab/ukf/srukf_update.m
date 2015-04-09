@@ -4,7 +4,7 @@
 %  date:   15-jan-2015
 %  brief:  function to update measurement in a ukf filter
 
-function [x,S] = srukf_update(dt,x,X,S,h,z,Sr,Sq)
+function [x2,S2] = srukf_update(dt,x1,S1,h,z,Sr)
 % Unscented Kalman Filter - UKF 
 % Update step:
 % [x, P] = ukf_update(dt,x,P,h,z,Q,R) returns posterior state estimate, x
@@ -30,8 +30,9 @@ function [x,S] = srukf_update(dt,x,X,S,h,z,Sr,Sq)
 % Inspired on initial script by Yi Cao at Cranfield University, 04/01/2008
 % http://es.mathworks.com/matlabcentral/fileexchange/18217-learning-the-unscented-kalman-filter/content/ukf.m
 
-
-L = numel(x);                                   %numer of states
+L = numel(x1);                                   %number of states
+N = 2*L+1;                                      %number of sigma points
+M = numel(z);                                   %number of measurements
 alpha = 1e-3;                                   %default, tunable
 ki = 0;                                         %default, tunable
 beta = 2;                                       %default, tunable
@@ -42,21 +43,47 @@ Wc = Wm;
 Wc(1) = Wc(1)+(1-alpha^2+beta);                 %weights for covariance
 c = sqrt(c);
 
-m=numel(z);
 hargs.dt=dt;                                    %number of measurements
 
-X = srsigmas(X(:,1),Sq,c);                            %sigma points around x1
-Xs = X-x(:,ones(1,size(X,2)));                %deviation of X1
+%if((exist('X1') ~= 1)||(isempty(X1)))
+x1_ = x1(:,ones(1,L));              % x_ = [x x x ... x]
+X1  = [x1, (x1_+c*S1), (x1_-c*S1)]; % prior sigma points
+X1s = X1 - x1(:,ones(1,N));         % prior std dev
+%end
 
-[z1,Z1,S2,Z2] = ut(h, hargs, X, Wm, Wc, m, Sr);  %unscented transformation of measurments
-P12 = Xs*diag(Wc)*Z2';                           %transformed cross-covariance
-K = (P12/S2')/S2; % inv?
-U = K*S2;
-%U = P12*inv(S2');
-%K = U*inv(S2);
+Z1 = zeros(M,N);      % predicted measurement sigma points
+z1 = zeros(M,1);      % predicted measurement
 
-x = x + K*(z - z1);                              %state update
-for i=1:size(U,2)
-    S = cholupdate(S,U(:,i),'-');                %covariance update
+for i = 1:N
+    Z1(:,i) = h(X1(:,i),hargs); % apply h() to calculate predicted measurement sigma points
+    z1 = z1 + Wm(i)*Z1(:,i);    % predicted measurement is ponderated from sigma points
 end
-S = S';
+
+Z1s = Z1 - z1(:,ones(1,N));
+
+[Q, Sz] = qr([sqrt(abs(Wc(2)))*Z1s(:,2:N) Sr]', 0);
+
+csign='+';
+if(Wc(1)<0)
+  csign='-';
+end
+
+Sz = cholupdate(Sz, sqrt(abs(Wc(1)))*Z1s(:,1),csign);
+Sz = Sz'; %needed?
+
+Pxz = X1s*diag(Wc)*Z1s'; %transformed cross-stddev
+%K = (Pxz/Sz')/Sz; % inv?
+%U = K*Sz;
+U = Pxz*inv(Sz');
+K = U*inv(Sz);
+
+x2 = x1 + K*(z - z1);  % posterior state update
+
+S2=S1' % posterior stddev (needs upper triangular)
+
+for i=1:size(U,2)
+    S2 = cholupdate(S2,U(:,i),'-');  % posterior stddev update
+end
+S2 = S2';
+
+end

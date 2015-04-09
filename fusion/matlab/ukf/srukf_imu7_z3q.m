@@ -127,18 +127,18 @@ for t=1:time
         u(3) = imu_gz(t);
 
         %% prediction step
-        [x,S,X,Xs]= srukf_predict(dt,x,S,f,u,Sq); % prediction step
+        [x,S]= srukf_predict(dt,x,S,f,u,Sq); % prediction step
         
         %% update step
         if(mod(t,dtacc*1000) == 0)
            h=@(x,args)h_imu3qa(x);
            z = [axn; ayn; azn]; % measurements
-           [x, S] = srukf_update(dt,x,X,S,h,z,Sa,Sq);  % ukf predict + measurement update
+           [x, S] = srukf_update(dt,x,S,h,z,Sa);  % ukf predict + measurement update
         end
         if(mod(t,dtmag*1000) == 0)
            h=@(x,args)h_imu3qm(x);
            z = [mxn; myn; mzn]; % measurements
-           [x, S] = srukf_update(dt,x,X,S,h,z,Sm,Sq);  % ukf predict + measurement update
+           [x, S] = srukf_update(dt,x,S,h,z,Sm);  % ukf predict + measurement update
         end
         
         %% re-normalize just in case
