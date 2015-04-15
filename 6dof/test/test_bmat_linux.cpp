@@ -9,7 +9,7 @@
 
 bool test00_eye()
 {
-  float r[] = { 10.f, 10.f, 10.f, 10.f, 10.f,
+  real_t r[] = { 10.f, 10.f, 10.f, 10.f, 10.f,
                 10.f, 10.f, 10.f, 10.f, 10.f,
                 10.f, 10.f, 10.f, 10.f, 10.f,
                 10.f, 10.f, 10.f, 10.f, 10.f,
@@ -23,28 +23,28 @@ bool test00_eye()
 
 bool test01_add()
 {
-  float a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
+  real_t a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f };
 
-  float b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
+  real_t b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f };
   
-  float c[] = { 3.f, 3.f,
+  real_t c[] = { 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f };
 
-  float d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
+  real_t d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
                 4.f, 4.f, 4.f, 4.f, 4.f };
 
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -79,25 +79,25 @@ bool test01_add()
 
 bool test02_copy()
 {
-  float a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
+  real_t a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f };
 
-  float b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
+  real_t b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f };
 
-  float c[] = { 3.f, 3.f,
+  real_t c[] = { 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f };
 
-  float d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
+  real_t d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
                 4.f, 4.f, 4.f, 4.f, 4.f };
 
   blob::Matrix A(5,5,a);
@@ -123,7 +123,7 @@ bool test02_copy()
 
 bool test03_scale()
 {
-  float r[] = { 10.f, 10.f, 10.f, 10.f, 10.f,
+  real_t r[] = { 10.f, 10.f, 10.f, 10.f, 10.f,
                 10.f, 10.f, 10.f, 10.f, 10.f,
                 10.f, 10.f, 10.f, 10.f, 10.f,
                 10.f, 10.f, 10.f, 10.f, 10.f,
@@ -137,28 +137,28 @@ bool test03_scale()
 
 bool test04_substract()
 {
-  float a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
+  real_t a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f,
                 1.f, 1.f, 1.f, 1.f, 1.f };
 
-  float b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
+  real_t b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f };
 
-  float c[] = { 3.f, 3.f,
+  real_t c[] = { 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f };
 
-  float d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
+  real_t d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
                 4.f, 4.f, 4.f, 4.f, 4.f };
 
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -193,28 +193,28 @@ bool test04_substract()
 
 bool test05_multiply()
 {
-  float a[] = { 1.5f, 1.5f, 1.5f, 1.5f, 1.5f,
+  real_t a[] = { 1.5f, 1.5f, 1.5f, 1.5f, 1.5f,
                 1.5f, 1.5f, 1.5f, 1.5f, 1.5f,
                 1.5f, 1.5f, 1.5f, 1.5f, 1.5f,
                 1.5f, 1.5f, 1.5f, 1.5f, 1.5f,
                 1.5f, 1.5f, 1.5f, 1.5f, 1.5f };
 
-  float b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
+  real_t b[] = { 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f,
                 2.f, 2.f, 2.f, 2.f, 2.f };
 
-  float c[] = { 3.f, 3.f,
+  real_t c[] = { 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f };
 
-  float d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
+  real_t d[] = { 4.f, 4.f, 4.f, 4.f, 4.f,
                 4.f, 4.f, 4.f, 4.f, 4.f };
 
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -287,23 +287,23 @@ bool test05_multiply()
 
 bool test06_transpose()
 {
-  float a[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
+  real_t a[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f };
 
-  float c[] = { 1.f, 1.f, 1.f,
+  real_t c[] = { 1.f, 1.f, 1.f,
                 2.f, 2.f, 2.f,
                 3.f, 3.f, 3.f,
                 4.f, 4.f, 4.f,
                 5.f, 5.f, 5.f };
 
-  float d[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
+  real_t d[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f };
 
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -373,25 +373,25 @@ bool test06_transpose()
 
 bool test07_cholesky()
 {
-  float a[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
+  real_t a[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f,
                 1.f, 2.f, 3.f, 4.f, 5.f };
 
-  float l[] = { 1.f, 0.f, 0.f, 0.f, 0.f,
+  real_t l[] = { 1.f, 0.f, 0.f, 0.f, 0.f,
                 2.f, 2.f, 0.f, 0.f, 0.f,
                 3.f, 3.f, 3.f, 0.f, 0.f,
                 4.f, 4.f, 4.f, 4.f, 0.f,
                 5.f, 5.f, 5.f, 5.f, 5.f };
   
-  float lt[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t lt[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                  0.f, 0.f, 0.f, 0.f, 0.f,
                  0.f, 0.f, 0.f, 0.f, 0.f,
                  0.f, 0.f, 0.f, 0.f, 0.f,
                  0.f, 0.f, 0.f, 0.f, 0.f };
   
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -418,24 +418,37 @@ bool test07_cholesky()
   A.cholesky(true);
   A.print();
   std::cout << std::endl;
+
+  blob::Matrix::multiply(L,Lt,A);
+  std::cout << "chol(" << std::endl;
+  A.print();
+  std::cout << ") = " << std::endl; 
+  A.cholesky(false);
+  A.print();
+  std::cout << " => " << std::endl; 
+  std::cout << "A=" << std::endl;
+  A.cholrestore(false);
+  A.print();
+  std::cout << std::endl;
+  std::cout << std::endl;
   return true;
 }
 
 bool test08_inverse()
 {
-  float a[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
+  real_t a[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
                 2.f, 8.f, 12.f, 16.f, 20.f,
                 3.f, 12.f, 27.f, 36.f, 45.f,
                 4.f, 16.f, 36.f, 64.f, 80.f,
                 5.f, 20.f, 45.f, 80.f, 125.f };
 
-  float a1[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t a1[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f };
 
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -445,7 +458,8 @@ bool test08_inverse()
   blob::Matrix A1(5,5,a1);
   blob::Matrix R(5,5,r);
 
-
+  std::cout << "test08_inverse" << std::endl << std::endl;
+  
   std::cout << "inv(" << std::endl;
   A.print();
   std::cout << ") = " << std::endl;
@@ -461,6 +475,7 @@ bool test08_inverse()
   R.print();
   std::cout << std::endl;
 
+  A1.zero();
   std::cout << "inv(" << std::endl;
   A.print();
   std::cout << ") = " << std::endl;
@@ -477,24 +492,82 @@ bool test08_inverse()
   return true;
 }
 
-bool test09_diag()
+bool test09_divide()
 {
-  float a[] = { 3.f, 3.f,
+  
+  real_t a[] = { 1.f, 1.f, 1.f, 1.f, 1.f,
+                 2.f, 2.f, 2.f, 2.f, 2.f,
+                 3.f, 3.f, 3.f, 3.f, 3.f,
+                 4.f, 4.f, 4.f, 4.f, 4.f,
+                 5.f, 5.f, 5.f, 5.f, 5.f };
+
+  real_t b[] = { 1.f, 2.f, 3.f, 4.f, 5.f,
+                2.f, 8.f, 12.f, 16.f, 20.f,
+                3.f, 12.f, 27.f, 36.f, 45.f,
+                4.f, 16.f, 36.f, 64.f, 80.f,
+                5.f, 20.f, 45.f, 80.f, 125.f };
+
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f };
+  
+  blob::Matrix A(5,5,a);
+  blob::Matrix B(5,5,b);
+  blob::Matrix R(5,5,r);
+
+  std::cout << "test09_divide" << std::endl << std::endl;
+  
+  A.print();
+  std::cout << " / " << std::endl;
+  B.print();
+  std::cout << " = " << std::endl;
+  blob::Matrix::divide(A,B,R);
+  R.print();
+  std::cout << " = " << std::endl;
+  B.inverse();
+  blob::Matrix::multiply(A,B,R);
+  R.print();
+
+  std::cout << std::endl << std::endl;
+  A.refurbish(1,5);
+  R.refurbish(1,5);
+  R.zero();
+  B.inverse();
+  A.print();
+  std::cout << " / " << std::endl;
+  B.print();
+  std::cout << " = " << std::endl;
+  blob::Matrix::divide(A,B,R);
+  R.print();
+  std::cout << " = " << std::endl;
+  B.inverse();
+  blob::Matrix::multiply(A,B,R);
+  R.print();
+  
+  std::cout << std::endl << std::endl;
+  return true;
+}
+
+bool test10_diag()
+{
+  real_t a[] = { 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f,
                 3.f, 3.f };
 
-  float b[] = { 4.f, 4.f, 4.f, 4.f,
+  real_t b[] = { 4.f, 4.f, 4.f, 4.f,
                 4.f, 4.f, 4.f, 4.f,
                 4.f, 4.f, 4.f, 4.f };
 
-  float d1[] = {2.f, 3.f};
-  float d2[] = {2.f, 3.f, 4.f, 5.f};
-  float d3[] = {2.f, 3.f, 4.f, 5.f, 6.f};
+  real_t d1[] = {2.f, 3.f};
+  real_t d2[] = {2.f, 3.f, 4.f, 5.f};
+  real_t d3[] = {2.f, 3.f, 4.f, 5.f, 6.f};
 
 
-  float r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
                 0.f, 0.f, 0.f, 0.f, 0.f,
@@ -572,6 +645,78 @@ bool test09_diag()
   return true;
 }
 
+bool test11_cholupdate()
+{
+  real_t ve[] = {1.f, 2.f, 3.f, 4.f, 5.f};
+
+  real_t l[] = { 1.f, 0.f, 0.f, 0.f, 0.f,
+                2.f, 2.f, 0.f, 0.f, 0.f,
+                3.f, 3.f, 3.f, 0.f, 0.f,
+                4.f, 4.f, 4.f, 4.f, 0.f,
+                5.f, 5.f, 5.f, 5.f, 5.f };
+  
+  real_t r[] = { 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f, 0.f, 0.f };
+  
+  blob::Matrix L(5,5,l);
+  blob::Matrix v(1,5,ve);
+  blob::Matrix R(5,5,r);
+
+  std::cout << "test11_cholupdate" << std::endl << std::endl;
+
+  L.print();
+  std::cout << " updated with " << std::endl; 
+  v.print();
+  std::cout << " = " << std::endl; 
+  L.cholupdate(v,1);
+  L.print();
+  std::cout << std::endl;
+  std::cout << std::endl;
+  return true;
+}
+
+bool test12_qr()
+{
+  real_t a[] = { 2.f, -51.f,   4.f,
+                  6.f, 167.f, -68.f,
+                 -4.f,  24.f, -41.f,
+                 -1.f,   1.f,   0.f,
+                  2.f,   0.f,   3.f};
+
+  real_t q[] = { 1.f, 0.f, 0.f, 0.f, 0.f,
+                2.f, 2.f, 0.f, 0.f, 0.f,
+                3.f, 3.f, 3.f, 0.f, 0.f,
+                4.f, 4.f, 4.f, 4.f, 0.f,
+                5.f, 5.f, 5.f, 5.f, 5.f };
+  
+  real_t r[] = { 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f,
+                 0.f, 0.f, 0.f };
+  
+  blob::Matrix A(5,3,a);
+  blob::Matrix Q(5,5,q);
+  blob::Matrix R(5,3,r);
+
+  std::cout << "test12_qr" << std::endl << std::endl;
+
+  blob::Matrix::qr(A,Q,R);
+  std::cout << " QR(" << std::endl; 
+  A.print();
+  std::cout << " ) => " << std::endl; 
+  std::cout << " Q = " << std::endl; 
+  Q.print();
+  std::cout << " , " <<std::endl;
+  std::cout << " R = " << std::endl;
+  R.print();
+  std::cout << std::endl;
+  std::cout << std::endl;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -586,6 +731,10 @@ int main(int argc, char* argv[])
   test06_transpose();
   test07_cholesky();
   test08_inverse();
-  test09_diag();
+  test09_divide();
+  test10_diag();
+  test11_cholupdate();
+  test12_qr();
+
   return 0;
 }

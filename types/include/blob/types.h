@@ -33,7 +33,7 @@ typedef   unsigned short word;
 #endif
 
 #ifndef   real_t
-typedef   double real_t;
+typedef   float real_t;
 #endif
 
 #endif // B_TYPES_H

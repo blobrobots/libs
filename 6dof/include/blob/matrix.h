@@ -47,9 +47,11 @@ class Matrix
     bool scale        (const real_t &n);
     bool transpose    ();
     bool inverse      ();
-    bool inverseLow   ();
     bool cholesky     (bool zero=true);
-
+    bool cholupdate   (Matrix &v, int sign);
+    bool cholrestore  (bool zero=true);
+    bool cholinverse  ();
+    
 //    static bool copy         (Matrix &Dest, const Matrix &Orig, uint8_t startrow=0, uint8_t startcol=0); // copy Orig into Dest
     static bool add          (const Matrix &A, const Matrix &B, Matrix &R);
     static bool substract    (const Matrix &A, const Matrix &B, Matrix &R);
@@ -57,16 +59,19 @@ class Matrix
     static bool multiplyDiag (const Matrix &A, const  Matrix &B, Matrix &R);
     static bool scale        (const real_t &n, const Matrix &A, Matrix &R);
     static bool transpose    (const Matrix &A, Matrix &R);
+    static bool divide       (const Matrix &A, Matrix &B, Matrix &R);
     static bool cholesky     (const Matrix &A, Matrix &L);
-    static bool inverse      (const Matrix &A, Matrix &R);
-    static bool inverseLow   (const Matrix &L, Matrix &R);
-
+    static bool inverse      (Matrix &A, Matrix &R);
+    static bool cholinverse  (const Matrix &L, Matrix &R);
+    static bool qr           (const Matrix &A, Matrix &Q, Matrix &R);
+    
     void print ();
     
   private:
     uint8_t _nrows;
     uint8_t _ncols;
     real_t *_data;
+
 };
 
 }

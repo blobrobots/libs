@@ -4,26 +4,19 @@
  * author: adrian jimenez-gonzalez
  * e-mail: blob.robotics@gmail.com
  **************************************/
-#include "blob/ukf.h"
+#include <blob/ukf.h>
+#include <blob/math.h>
 
-#if defined(__linux__)
-  #include <math.h>
-  #include <iostream>
-#endif
-
-blob::UKF::UKF (uint8_t states, real_t *init_x)
+blob::UKF::UKF (uint8_t n, real_t *init_x) : Estimator (n, init_x)
 {
-  _n = states;
-  
-  memcpy(_x, init_x, _n*sizeof(real_t));
   blob::Matrix P(_n, _n, _P);
   P.eye();
   memset(_X, 0, sizeof(_X));
   memset(_Xs, 0, sizeof(_Xs));
   
   _alpha = 0.001;                          // tunable
-  _ki = 0;                                // tunable
-  _beta = 2;                              // tunable
+  _ki = 0;                                 // tunable
+  _beta = 2;                               // tunable
   _lambda = _alpha*_alpha*(_n + _ki) - _n;  // factor
   _c = _n + _lambda;                        // factor
   _wc[0] = _wm[0] = _lambda/_c; 
@@ -32,7 +25,7 @@ blob::UKF::UKF (uint8_t states, real_t *init_x)
     _wc[i] = _wm[i] = 0.5/_c;                 // weights for means
   
   _wc[0] = _wc[0]+(1-_alpha*_alpha+_beta); // weights for covariance
-  _c = sqrtf(_c);
+  _c = math::sqrt(_c);
 
   _updated = false;
 
@@ -41,7 +34,7 @@ blob::UKF::UKF (uint8_t states, real_t *init_x)
 bool blob::UKF::sigmas (blob::Matrix &x, blob::Matrix &P, blob::Matrix &X)
 {
   bool retval = true;
-  real_t aux[BLOB_UKF_MAX_STATE_LENGTH*BLOB_UKF_MAX_STATE_LENGTH];
+  real_t aux[BLOB_UKF_MAX_N*BLOB_UKF_MAX_N];
   blob::Matrix Aux(_n,_n, aux);
 
   retval &= Aux.copy(P);
@@ -62,11 +55,11 @@ bool blob::UKF::sigmas (blob::Matrix &x, blob::Matrix &P, blob::Matrix &X)
   return retval;
 }
 
-bool blob::UKF::ut (ukf_function function, void *args, blob::Matrix & X, const blob::Matrix & R, 
+bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X, blob::Matrix & R, 
                     blob::Matrix & x_u, blob::Matrix & P_u, blob::Matrix & X_u, blob::Matrix & Xs_u)
 {
   bool retval = true;
-  real_t aux [(2*BLOB_UKF_MAX_STATE_LENGTH+1)*BLOB_UKF_MAX_LENGTH];
+  real_t aux [(2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_LENGTH];
 
   int l = x_u.nrows();
 
@@ -116,7 +109,7 @@ bool blob::UKF::ut (ukf_function function, void *args, blob::Matrix & X, const b
   return retval;
 }
 
-bool blob::UKF::predict (ukf_function function, void *args, real_t *r)
+bool blob::UKF::predict (estimator_function_t function, void *args, real_t *r)
 {
   bool retval = true;
 
@@ -143,14 +136,14 @@ bool blob::UKF::predict (ukf_function function, void *args, real_t *r)
   
 }
 
-bool blob::UKF::update  (ukf_function function, void *args, const uint8_t m, real_t *z_, real_t *q)
+bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_t m, real_t *z_, real_t *q)
 {
   bool retval = true;
 
-  real_t z1_  [BLOB_UKF_MAX_Z_LENGTH];
-  real_t P1_  [BLOB_UKF_MAX_Z_LENGTH*BLOB_UKF_MAX_Z_LENGTH];
-  real_t Z1_  [(2*BLOB_UKF_MAX_Z_LENGTH+1)*BLOB_UKF_MAX_Z_LENGTH];
-  real_t Z1s_ [(2*BLOB_UKF_MAX_Z_LENGTH+1)*BLOB_UKF_MAX_Z_LENGTH];
+  real_t z1_  [BLOB_UKF_MAX_M];
+  real_t P1_  [BLOB_UKF_MAX_M*BLOB_UKF_MAX_M];
+  real_t Z1_  [(2*BLOB_UKF_MAX_M+1)*BLOB_UKF_MAX_M];
+  real_t Z1s_ [(2*BLOB_UKF_MAX_M+1)*BLOB_UKF_MAX_M];
 
   blob::Matrix Q(m,m,q);
 
@@ -179,9 +172,9 @@ bool blob::UKF::update  (ukf_function function, void *args, const uint8_t m, rea
   // unscented transformation of measurments
   ut(function, args, X, Q, z1, P2, Z1, Z1s);
 
-  real_t auxb[(2*BLOB_UKF_MAX_STATE_LENGTH+1)*BLOB_UKF_MAX_LENGTH];
-  real_t p12 [(2*BLOB_UKF_MAX_STATE_LENGTH+1)*BLOB_UKF_MAX_LENGTH];
-  real_t   k [BLOB_UKF_MAX_STATE_LENGTH*BLOB_UKF_MAX_Z_LENGTH];
+  real_t auxb[(2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_LENGTH];
+  real_t p12 [(2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_LENGTH];
+  real_t   k [BLOB_UKF_MAX_N*BLOB_UKF_MAX_M];
   
   blob::Matrix P12 (_n,m,p12);
   blob::Matrix K (_n,m,k);
@@ -193,8 +186,9 @@ bool blob::UKF::update  (ukf_function function, void *args, const uint8_t m, rea
 
   retval &= blob::Matrix::multiply(aux, Z1s, P12);
  
-  retval &= P2.inverse();
-  retval &= blob::Matrix::multiply(P12, P2, K);
+  //retval &= P2.inverse();
+  //retval &= blob::Matrix::multiply(P12, P2, K);
+  retval &= blob::Matrix::divide(P12, P2, K);
   
   //state update
   aux.refurbish(_n,1);

@@ -5,10 +5,12 @@
  * e-mail: blob.robotics@gmail.com
  /*************************************/
 #include <iostream>
+#include <sstream> 
 #include <fstream>
 #include <math.h>
 
-#include "blob/ukf.h"
+#include <blob/math.h>
+#include <blob/srukf.h>
 
 #define N   7   // Number of states
 
@@ -16,15 +18,15 @@
 #define Tacc 0.02
 #define Tmag 0.05
 
-#define qq   0
-#define qbg  0.0001
+#define qq   0 // 0
+#define qbg  0.0001 // 0.0001
 #define racc 0.1
 #define rmag 0.25
 
-#define qq_T_2   (qq*qq*T*T)
-#define qbg_T_2  (qq*qq*T*T)
-#define racc_T_2 (racc*racc*Tacc*Tacc)
-#define rmag_T_2 (rmag*rmag*Tmag*Tmag)
+#define qq_T   (qq*T)
+#define qbg_T  (qq*T)
+#define racc_T (racc*Tacc)
+#define rmag_T (rmag*Tmag)
 
 typedef struct {
   real_t u[3];
@@ -59,7 +61,7 @@ void f(real_t *x, void *args, real_t * res)
   res[6] = gbz;
 
   // re-normalize quaternion
-  real_t qnorm = sqrt(res[0]*res[0] + res[1]*res[1] + res[2]*res[2] + res[3]*res[3]);
+  real_t qnorm = blob::math::sqrt(res[0]*res[0] + res[1]*res[1] + res[2]*res[2] + res[3]*res[3]);
   res[0] = res[0]/qnorm;
   res[1] = res[1]/qnorm;
   res[2] = res[2]/qnorm;
@@ -143,13 +145,21 @@ int main(int argc, char* argv[])
           {
             real_t gx, gy, gz, ax, ay, az, mx, my, mz, anorm, mnorm, roll, pitch, yaw;
 
-            sscanf(line.c_str(),"%lf %lf %lf %lf %lf %lf %lf %lf %lf"
-                               , &gx, &gy, &gz, &ax, &ay, &az, &mx, &my, &mz);
+            std::stringstream lineinput(line);
+            lineinput >> gx >> gy >> gz >> ax >> ay >> az  >> mx >> my >> mz;
+            
+            //if(sizeof(real_t) == sizeof(double)) // FIXME: change to stringstream >> 
+            //  sscanf(line.c_str(),"%lf %lf %lf %lf %lf %lf %lf %lf %lf"
+            //                    , &gx, &gy, &gz, &ax, &ay, &az, &mx, &my, &mz);
+            //else
+            //  sscanf(line.c_str(),"%f %f %f %f %f %f %f %f %f"
+            //                    , &gx, &gy, &gz, &ax, &ay, &az, &mx, &my, &mz);
+              
             ta += T; 
             tm += T;
 
             // normalise measurements
-            anorm = sqrt(ax*ax + ay*ay + az*az);
+            anorm = blob::math::sqrt(ax*ax + ay*ay + az*az);
             if (anorm > 0)
             {
               ax = ax/anorm;
@@ -157,7 +167,7 @@ int main(int argc, char* argv[])
               az = az/anorm;
             }
 
-            mnorm = sqrt(mx*mx + my*my + mz*mz);
+            mnorm = blob::math::sqrt(mx*mx + my*my + mz*mz);
             if (mnorm > 0)
             {
               mx = mx/mnorm;
@@ -199,7 +209,7 @@ int main(int argc, char* argv[])
 
             // re-normalize quaternion
             real_t *q = ukf.getState();
-            real_t qnorm = sqrtf(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+            real_t qnorm = blob::math::sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
             q[0] = q[0]/qnorm;
             q[1] = q[1]/qnorm;
             q[2] = q[2]/qnorm;

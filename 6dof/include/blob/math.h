@@ -8,6 +8,8 @@
 #ifndef B_MATH_H
 #define B_MATH_H
 
+#include <blob/types.h>
+
 #if defined(__AVR_ATmega32U4__)
   #include "Arduino.h"
 #endif // defined(__AVR_ATmega32U4__)
@@ -19,12 +21,47 @@
 
 namespace blob {
 
-const float pi (3.14159265359f);
+const real_t pi (3.14159265359);
 
 class math
 {
 
 public:
+
+  static bool using_double() {return (sizeof(real_t)==sizeof(double));}
+
+  static real_t sqrt (const real_t& a) {
+    return using_double()? sqrt(a) : sqrtf(a);
+  }
+
+  static real_t cos (const real_t& a) {
+    return using_double()? cos(a) : cosf(a);
+  }
+
+  static real_t sin (const real_t& a) {
+    return using_double()? sin(a) : sinf(a);
+  }
+
+  static real_t tan (const real_t& a) {
+    return using_double()? tan(a) : tanf(a);
+  }
+
+  static real_t asin (const real_t& a) {
+    return using_double()? asin(a) : asinf(a);
+  }
+
+  static real_t acos (const real_t& a) {
+    return using_double()? acos(a) : acosf(a);
+  }
+
+  static real_t atan (const real_t& a) {
+    return using_double()? atan(a) : atanf(a);
+  }
+
+  static real_t atan2 (const real_t& a, const real_t& b) {
+    return using_double()? atan2(a, b) : atan2f(a, b);
+  }
+
   template <class T> static const T& minimum (const T& a, const T& b) {
 #if defined(__AVR_ATmega32U4__)
     return min(a,b);

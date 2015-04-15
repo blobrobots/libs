@@ -11,6 +11,8 @@
 #include <math.h>
 #endif
 
+#define BLOB_MATRIX_MAX_LENGTH (50*50)
+
 real_t & blob::Matrix::operator()(const uint8_t row, const uint8_t col)
 {
   if(_data && (row<_nrows) && (col<_ncols))
@@ -197,7 +199,7 @@ bool blob::Matrix::cholesky (bool zero)
       {
 #if defined(__DEBUG__) & defined(__linux__)
         std::cerr << "Matrix::cholesky() error: Matrix is not positive definite" << std::endl;
- #endif
+#endif
         retval = false;
       }
       else
@@ -228,9 +230,42 @@ bool blob::Matrix::cholesky (bool zero)
   return retval;
 }
 
-bool blob::Matrix::inverseLow ()
+bool blob::Matrix::cholrestore (bool zero)
 {
-  // Inverse assuming Lower triangular matrix
+  bool retval = false;
+  if(_nrows == _ncols)
+  {
+    if(zero == false) // original matrix stored in upper triangle
+    {
+      uint8_t n = _nrows;
+      for(int i=0; i<n; i++)
+      {
+        real_t t = 0.0;
+        for(int j=0; j<i+1; j++)
+        {
+          t += _data[i*n+j]*_data[i*n+j];
+          _data[i*n+j] = (i==j)? t:_data[j*n+i]; // assumes original matrix stored in upper triangle
+        }
+      }
+      retval = true;
+    }
+    else
+    { // TODO
+#if defined(__DEBUG__) & defined(__linux__)
+      std::cerr << "Matrix::cholrestore() error: not implemented for zero = true" << std::endl;
+#endif
+    }
+  }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::cholinverse() error: Matrix is not square" << std::endl;
+#endif
+  return retval;
+}
+
+bool blob::Matrix::cholinverse ()
+{
+  // inverse assuming lower triangular matrix
   bool retval = false;
 
   if(_nrows == _ncols)
@@ -251,7 +286,7 @@ bool blob::Matrix::inverseLow ()
   }
 #if defined(__DEBUG__) & defined(__linux__)
   else
-    std::cerr << "Matrix::inverseLow() error: Matrix is not square" << std::endl;
+    std::cerr << "Matrix::cholinverse() error: Matrix is not square" << std::endl;
 #endif
   return retval;
 }
@@ -261,9 +296,9 @@ bool blob::Matrix::inverse ()
   bool retval = false;
   
   if((cholesky(false) == true) && 
-     (inverseLow()== true))
+     (cholinverse()== true))
   {
-  //Reconstruct inverse of A: inv(L)'*inv(L)
+  //reconstruct inverse of A: inv(A) = inv(L)'*inv(L)
     uint8_t n = _nrows;
     for(int i=0; i<n; i++)
     {
@@ -307,7 +342,7 @@ bool blob::Matrix::eye()
   }
 #if defined(__DEBUG__) & defined(__linux__)
   else
-    std::cerr << "Matrix::inverseLow() error: Matrix is not square" << std::endl;
+    std::cerr << "Matrix::cholinverse() error: Matrix is not square" << std::endl;
 #endif
   
   return retval;
@@ -478,6 +513,42 @@ bool blob::Matrix::multiplyDiag (const Matrix &A, const Matrix &D, Matrix &R)
   return retval;
 }
 
+bool blob::Matrix::divide (const blob::Matrix &A, blob::Matrix &B, blob::Matrix &R)
+{
+  bool retval = false;
+  uint8_t n = B.nrows();
+  uint8_t m = A.nrows();
+
+  if((R.nrows() == m)&&
+     (R.ncols() == n)&&
+      B.cholesky(false) == true)
+  {
+    for(int c = 0; c<m; c++)
+    {
+      // forward solve Ly = I(c)
+      for(int i = 0; i<n; i++)
+      {
+        R(c,i) = A(c,i);
+        for(int j=0; j<i; j++)
+          R(c,i) -= B(i,j)*R(c,j);
+        R(c,i) /= B(i,i);
+      }
+
+      // backward solve L'x = y
+      for(int i=n-1; i>=0; i--)
+      {
+        for (int j=i+1; j<n; j++)
+          R(c,i) -= B(j,i)*R(c,j);
+        R(c,i) /= B(i,i);
+      }
+    }
+    // restore A from L
+    B.cholrestore(false);
+    retval = true;
+  }
+  return retval;
+}
+
 bool blob::Matrix::transpose (const blob::Matrix &A, blob::Matrix &R)
 {
   bool retval = false;
@@ -536,20 +607,24 @@ bool blob::Matrix::cholesky (const blob::Matrix &A, blob::Matrix &L)
         } 
       }
     }
-#if defined(__DEBUG__) & defined(__linux__)
-        std::cerr << "Matrix::cholesky() error: Matrix is not square" << std::endl;
-#endif
-    return retval;
   }
+  else
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::cholesky() error: Matrix is not square" << std::endl;
+#endif
+    retval = false;
+  }
+  return retval;
 }
 
-bool blob::Matrix::inverseLow (const blob::Matrix &L, blob::Matrix &R)
+bool blob::Matrix::cholinverse (const blob::Matrix &L, blob::Matrix &R)
 {
   // Inverse assuming Lower triangular matrix
   bool retval = false;
 
   if((L.nrows() == L.ncols())&&
-     (R.nrows() == L.nrows()) && 
+     (R.nrows() == L.nrows())&& 
      (R.ncols() == L.ncols()))
   {
     uint8_t n = L.nrows();
@@ -569,7 +644,7 @@ bool blob::Matrix::inverseLow (const blob::Matrix &L, blob::Matrix &R)
   }
 #if defined(__DEBUG__) & defined(__linux__)
   else
-    std::cerr << "Matrix::inverseLow() error: " << (int)L.nrows() << "==" << (int)L.ncols() << "?" 
+    std::cerr << "Matrix::cholinverse() error: " << (int)L.nrows() << "==" << (int)L.ncols() << "?" 
                                                 << (int)R.nrows() << "==" << (int)L.nrows() << "?" 
                                                 << (int)R.ncols() << "==" << (int)L.ncols() << "?" 
                                                 << std::endl;
@@ -578,41 +653,189 @@ bool blob::Matrix::inverseLow (const blob::Matrix &L, blob::Matrix &R)
   return retval;
 }
 
+/*
 bool blob::Matrix::inverse (const blob::Matrix &A, blob::Matrix &R)
 {
   bool retval = false;
-  
-  if((cholesky(A,R)  == true) && 
-     (R.inverseLow() == true))
+  if((retval = R.copy(A)) == true);
+    retval = R.inverse();
+  return retval;
+}
+*/
+
+
+bool blob::Matrix::inverse (blob::Matrix &A, blob::Matrix &R)
+{
+  bool retval = false;
+
+  if((R.nrows() == R.ncols())&&
+     (R.nrows() == A.nrows())&& 
+     (R.ncols() == R.ncols())&&
+      A.cholesky(false) == true) // A=L
   {
-    //Reconstruct inverse of R: inv(L)'*inv(L)
     uint8_t n = R.nrows();
-    for(int i=0; i<n; i++)
+
+    for(int c = 0; c<n; c++)
     {
-      int ii = n-i-1;
-      for(int j=0; j<=i; j++)
+      // forward solve Ly = I(c)
+      for(int i = 0; i<n; i++)
       {
-        int jj = n-j-1;
-        real_t t = 0.0;
-        for(int k=0; k<=ii; k++)
-        {
-          int kk = n-k-1;
-          t += R[kk*n + i]*R[kk*n + j];
-        }
-        R[i*n + j] = t;
+        R(c,i) = (c==i)? 1:0;
+        for(int j=0; j<i; j++)
+          R(c,i) -= A(i,j)*R(c,j);
+        R(c,i) /= A(i,i);
+      }
+
+      // backward solve L'x = y
+      for(int i=n-1; i>=0; i--)
+      {
+        for (int j=i+1; j<n; j++)
+          R(c,i) -= A(j,i)*R(c,j);
+        R(c,i) /= A(i,i);
       }
     }
-    // de-triangularization
-    for(int i=n-1; i>0; i--)
-    {
-      for(int j=i-1; j>=0; j--)
-      {
-        R[j*n+i] = R[i*n+j];
-      }
-    }
+    // restore A from L
+    A.cholrestore(false);
     retval = true;
   }
   return retval;
+}
+
+bool blob::Matrix::cholupdate (Matrix &v, int sign)
+{
+  bool retval = false;
+  uint8_t n = _nrows;
+
+  if(_nrows != _ncols)
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::cholupdate() error: Matrix is not square" << std::endl;
+#endif
+    return false;
+  }
+
+  if((v.length() != n)||((v.nrows() != 1)&&(v.ncols() != 1)))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::cholupdate() error: vector not 1x" << (int)n << std::endl;
+#endif
+    return false;
+  }
+  
+  if((sign != -1)&&(sign!=1))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::cholupdate() error: sign not unitary: " << sign << std::endl;
+#endif
+    return false;
+  }
+
+  for (int i=0; i<n; i++)
+  {
+    if(_data[i*n+i] == 0.0)
+    {
+#if defined(__DEBUG__) & defined(__linux__)
+      std::cerr << "Matrix::cholupdate() error: Matrix is not positive definite" << std::endl;
+#endif
+      return false;
+    }
+    real_t r =  sqrt(_data[i*n+i]*_data[i*n+i] + (real_t)sign*v[i]*v[i]);
+    real_t c = r/_data[i*n+i];
+    real_t s = v[i]/_data[i*n+i];
+    _data[i*n+i] = r;
+
+    if(c == 0.0)
+    {
+#if defined(__DEBUG__) & defined(__linux__)
+      std::cerr << "Matrix::cholupdate() error: Matrix is not positive definite" << std::endl;
+#endif
+      return false;
+    }
+
+    for(int j=i+1; j<n; j++)
+    {
+      _data[j*n+i] = (_data[j*n+i] + sign*s*v[j])/c;
+      v[j] = c*v[j] - s*_data[j*n+i];
+    }
+  }
+  return true;
+}
+
+bool blob::Matrix::qr (const Matrix &A, Matrix &Q, Matrix &R)
+{
+  uint8_t m = A.nrows();
+  uint8_t n = A.ncols();
+  int i=0,j=0,k=0;
+  
+  if(A.length()>BLOB_MATRIX_MAX_LENGTH)
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::qr() error: Matrix A length is greater than " << (int)BLOB_MATRIX_MAX_LENGTH << std::endl;
+#endif
+    return false;
+  }
+
+  if((Q.nrows() != m)||(Q.ncols() != m))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::qr() error: Matrix Q is not square with m=" << (int)m << std::endl;
+#endif
+    return false;
+  }
+
+  if((R.nrows() != m)||(R.ncols() != n))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::qr() error: Matrix R has not the same size as A" << std::endl;
+#endif
+    return false;
+  }
+ 
+  real_t h[BLOB_MATRIX_MAX_LENGTH];
+  real_t aux[BLOB_MATRIX_MAX_LENGTH];
+  
+  Matrix H(m,m,h);
+  Matrix Aux(m,n,aux);
+
+  Q.eye();
+  R.copy(A);
+
+  for (i=0; i<n && i<(m-1); i++)
+  {
+    H.eye();
+
+    real_t sign = (R(i,i) < 0)? -1:1;
+        
+    real_t nrm = 0.0;
+    for(k=i; k<m; k++)
+      nrm += R(k,i)*R(k,i);
+    nrm = sqrtf(nrm);
+        
+    real_t d = (R(i,i) + sign*nrm);
+    real_t t = 1;
+    for(k=i+1; k<m; k++)
+      t += (R(k,i)/d)*(R(k,i)/d);
+    t=2/t;
+  
+    for(j=i; j<m; j++)
+    {
+      for(k=i; k<m; k++)
+      {
+        real_t vj = (j==i)? 1.0 : R(j,i)/d;
+        real_t vk = (k==i)? 1.0 : R(k,i)/d;
+        H(j,k) = H(j,k) - vj*vk*t;
+      }
+    }
+    Aux.refurbish(m,m);
+    multiply(Q,H,Aux);
+    Q.copy(Aux);
+
+    Aux.refurbish(m,n);
+    multiply(H,R,Aux);
+    R.copy(Aux);
+  }
+
+  return true;
 }
 
 void blob::Matrix::print ()
