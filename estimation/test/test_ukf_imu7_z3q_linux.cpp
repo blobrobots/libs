@@ -10,7 +10,7 @@
 #include <math.h>
 
 #include <blob/math.h>
-#include <blob/srukf.h>
+#include <blob/ukf.h>
 
 #define N   7   // Number of states
 
@@ -23,10 +23,10 @@
 #define racc 0.1
 #define rmag 0.25
 
-#define qq_T   (qq*T)
-#define qbg_T  (qq*T)
-#define racc_T (racc*Tacc)
-#define rmag_T (rmag*Tmag)
+#define qq_T_2   (qq*qq*T*T)
+#define qbg_T_2  (qbg*qbg*T*T)
+#define racc_T_2 (racc*racc*Tacc*Tacc)
+#define rmag_T_2 (rmag*rmag*Tmag*Tmag)
 
 typedef struct {
   real_t u[3];
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
         real_t ta = 0, tm = 0;
 
         blob::UKF ukf(N, x);
-        
+
         fargs_t fargs;
 
         while ( getline (input_file,line) )

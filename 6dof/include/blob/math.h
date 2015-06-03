@@ -29,9 +29,13 @@ class math
 public:
 
   static bool using_double() {return (sizeof(real_t)==sizeof(double));}
+  
+  static real_t fabs (const real_t& a) {
+    return fabsf(a);
+  }
 
   static real_t sqrt (const real_t& a) {
-    return using_double()? sqrt(a) : sqrtf(a);
+    return sqrtf(a);
   }
 
   static real_t cos (const real_t& a) {
@@ -61,6 +65,8 @@ public:
   static real_t atan2 (const real_t& a, const real_t& b) {
     return using_double()? atan2(a, b) : atan2f(a, b);
   }
+
+  template <class T> static T sign (const T& a) {return (a<0)? -1:1;}
 
   template <class T> static const T& minimum (const T& a, const T& b) {
 #if defined(__AVR_ATmega32U4__)

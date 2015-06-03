@@ -40,6 +40,8 @@ if(${PLATFORM} MATCHES "Arduino")
 else(${PLATFORM} MATCHES "Arduino")
   add_library(blob_estimation SHARED ${LIB_SRC})
   add_library(blob_estimation_static STATIC ${LIB_SRC})
+  target_link_libraries(blob_estimation) # link libraries
+
 endif(${PLATFORM} MATCHES "Arduino")
 
 # compile tests and dependencies only if standalone compilation

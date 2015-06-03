@@ -41,10 +41,7 @@ class Estimator
 
       _n = n_states;
       if(init_state && _n)
-        memcpy(_x, init_state, _n*sizeof(real_t));
-
-        print();
-    
+        memcpy(_x, init_state, _n*sizeof(real_t));    
     }
 
     virtual bool predict (estimator_function_t predictFunction, void *args, 

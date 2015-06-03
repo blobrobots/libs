@@ -40,7 +40,7 @@ class UKF : public Estimator
   protected:
 
     bool ut (estimator_function_t function, void *args, Matrix & X, Matrix & R, 
-             Matrix & x_u, Matrix & P_u, Matrix & X_u, Matrix & Xs_u);
+             Matrix & u, Matrix & Pu, Matrix & U, Matrix & Us);
     
     bool sigmas  (Matrix & x, Matrix &P, Matrix & X);
 

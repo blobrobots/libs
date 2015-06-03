@@ -5,10 +5,10 @@
  * e-mail: blob.robotics@gmail.com
  **************************************/
 #include "blob/matrix.h"
+#include "blob/math.h"
 
 #if defined(__linux__)
-#include <iostream>
-#include <math.h>
+ #include <iostream>
 #endif
 
 #define BLOB_MATRIX_MAX_LENGTH (50*50)
@@ -59,6 +59,72 @@ blob::Matrix & blob::Matrix::operator*=(const real_t &n)
 {
   this->scale(n);
 }
+
+real_t blob::Matrix::norm ()
+{
+  real_t retval = 0;
+  for (int i = 0; i<length(); i++)
+    retval+=_data[i]*_data[i];
+  return math::sqrt(retval);
+}
+
+bool blob::Matrix::forcePositive ()
+{
+  bool retval = false;
+
+  if(_nrows == _ncols)
+  {
+    real_t min = math::fabs(_data[0]);
+    real_t max = min;
+    for (int i = 0; i<_nrows; i++)
+    {
+      real_t mm = math::fabs(_data[i*_ncols + i]);
+      if (mm < min) min = mm;
+      if (mm > max) max = mm;
+    }
+    real_t epsilon = min/max;
+
+    if(epsilon < 1.0)
+    { 
+      std::cout << "Matrix::forcePositive() epsilon=" << epsilon << std::endl;
+      for (int i = 0; i<_nrows; i++)
+        _data[i*_ncols + i] += epsilon;
+    }
+
+    retval = true;
+  }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::forcePositive() error: Matrix is not square" << std::endl;
+#endif
+
+  return retval;
+}
+
+bool blob::Matrix::simmetrize ()
+{
+  bool retval = false;
+
+  if(_nrows == _ncols)
+  {
+    for (int i = 0; i<_nrows; i++)
+    {
+      for (int j = 0; j<i; j++)
+      {
+        real_t t = (_data[i*_ncols + j]+_data[j*_ncols + i])/2.0;
+        _data[i*_ncols + j] = _data[j*_ncols + i] = t;
+      }
+    }
+    retval = true;
+  }
+#if defined(__DEBUG__) & defined(__linux__)
+  else
+    std::cerr << "Matrix::simmetrize() error: Matrix is not square" << std::endl;
+#endif
+
+  return retval;
+}
+
 
 bool blob::Matrix::copy (const blob::Matrix &A, uint8_t startrow, uint8_t startcol)
 {
@@ -204,7 +270,7 @@ bool blob::Matrix::cholesky (bool zero)
       }
       else
       {
-        t = 1/sqrtf(_data[i*n + i]);
+        t = 1/math::sqrt(_data[i*n + i]);
         for(j = i ; j < n ; j++)
           _data[j*n + i] *= t;
       }
@@ -348,7 +414,7 @@ bool blob::Matrix::eye()
   return retval;
 }
 
-/*bool blob::Matrix::copy (blob::Matrix  &Dest, const blob::Matrix &Orig, uint8_t startrow, uint8_t startcol)
+/*bool blob::Matrix::copy (blob::Matrix  &Dest, drow, dcol, const blob::Matrix &Orig, uint8_t orow, uint8_t ocol)
 {
   bool retval = false;
   if((Dest.nrows() >= startrow+Orig.nrows())&&(Dest.ncols() >= startcol+Orig.ncols()))
@@ -603,7 +669,7 @@ bool blob::Matrix::cholesky (const blob::Matrix &A, blob::Matrix &L)
         else
         {
           L[i*n + j] = (i == j)?
-          sqrtf(A[i*n + i] - s) : (1/L[j*n + j]*(A[i*n + j] - s));
+          math::sqrt(A[i*n + i] - s) : (1/L[j*n + j]*(A[i*n + j] - s));
         } 
       }
     }
@@ -663,7 +729,6 @@ bool blob::Matrix::inverse (const blob::Matrix &A, blob::Matrix &R)
 }
 */
 
-
 bool blob::Matrix::inverse (blob::Matrix &A, blob::Matrix &R)
 {
   bool retval = false;
@@ -701,6 +766,45 @@ bool blob::Matrix::inverse (blob::Matrix &A, blob::Matrix &R)
   return retval;
 }
 
+bool blob::Matrix::ldl (const blob::Matrix &A, blob::Matrix &L, blob::Matrix &d)
+{
+
+  if((A.nrows() != A.ncols())||(L.nrows() != L.ncols())||(A.ncols() != L.nrows()))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::ldl() error: Matrix is not square" << std::endl;
+#endif
+    return false;
+  }
+  if(((d.nrows() != 1)&&(d.ncols() != 1))||(d.length() != A.ncols()))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::ldl() error: Matrix is not square" << std::endl;
+#endif
+    return false;
+  }
+
+  uint8_t n = A.nrows();
+  int i,j,k;
+  L.zero();
+  for(j=0; j<n; j++)
+  {
+    L(j,j) = 1.0;
+    real_t t = A(j,j);
+    for(k=1; k<j; k++)
+      t -= d[k]*L(j,k)*L(j,k);
+    d[j] = t;
+    
+    for(i=j+1; i<n; i++)
+    {
+      L(j,i) = 0.0;
+      t = A(i,j);
+      for (k=1; k<j;k++)
+        t -= d[k]*L(i,k)*L(j,k);
+      L(i,j) = t/d[j];
+    }
+  }
+}
 bool blob::Matrix::cholupdate (Matrix &v, int sign)
 {
   bool retval = false;
@@ -725,21 +829,32 @@ bool blob::Matrix::cholupdate (Matrix &v, int sign)
   if((sign != -1)&&(sign!=1))
   {
 #if defined(__DEBUG__) & defined(__linux__)
-    std::cerr << "Matrix::cholupdate() error: sign not unitary: " << sign << std::endl;
+    std::cerr << "Matrix::cholupdate() error: sign not unitary s=" << sign << std::endl;
 #endif
     return false;
   }
 
   for (int i=0; i<n; i++)
   {
+    real_t sr = _data[i*n+i]*_data[i*n+i] + (real_t)sign*v[i]*v[i];
+
     if(_data[i*n+i] == 0.0)
     {
 #if defined(__DEBUG__) & defined(__linux__)
-      std::cerr << "Matrix::cholupdate() error: Matrix is not positive definite" << std::endl;
+      std::cerr << "Matrix::cholupdate() error: Matrix with zero diagonal element " << i << std::endl;
 #endif
       return false;
     }
-    real_t r =  sqrt(_data[i*n+i]*_data[i*n+i] + (real_t)sign*v[i]*v[i]);
+
+    if(sr < 0.0)
+    {
+#if defined(__DEBUG__) & defined(__linux__)
+      std::cerr << "Matrix::cholupdate() error: Result is not positive definite sqrt(neg)" << std::endl;
+#endif
+      return false;
+    }
+
+    real_t r =  math::sqrt(_data[i*n+i]*_data[i*n+i] + (real_t)sign*v[i]*v[i]);
     real_t c = r/_data[i*n+i];
     real_t s = v[i]/_data[i*n+i];
     _data[i*n+i] = r;
@@ -747,7 +862,7 @@ bool blob::Matrix::cholupdate (Matrix &v, int sign)
     if(c == 0.0)
     {
 #if defined(__DEBUG__) & defined(__linux__)
-      std::cerr << "Matrix::cholupdate() error: Matrix is not positive definite" << std::endl;
+      std::cerr << "Matrix::cholupdate() error: Result is not positive definite" << std::endl;
 #endif
       return false;
     }
@@ -809,7 +924,7 @@ bool blob::Matrix::qr (const Matrix &A, Matrix &Q, Matrix &R)
     real_t nrm = 0.0;
     for(k=i; k<m; k++)
       nrm += R(k,i)*R(k,i);
-    nrm = sqrtf(nrm);
+    nrm = math::sqrt(nrm);
         
     real_t d = (R(i,i) + sign*nrm);
     real_t t = 1;
