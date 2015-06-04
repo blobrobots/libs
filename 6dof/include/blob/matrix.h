@@ -32,6 +32,8 @@ class Matrix
     
     bool zero () {memset(_data,0,sizeof(real_t)*_nrows*_ncols); return true;}
     bool eye  ();
+    bool simmetrize    ();
+    bool forcePositive ();
 
     real_t & operator()(const uint8_t row, const uint8_t col);
     const real_t & operator()(const uint8_t row, const uint8_t col) const;
@@ -51,6 +53,7 @@ class Matrix
     bool cholupdate   (Matrix &v, int sign);
     bool cholrestore  (bool zero=true);
     bool cholinverse  ();
+    real_t norm ();
     
 //    static bool copy         (Matrix &Dest, const Matrix &Orig, uint8_t startrow=0, uint8_t startcol=0); // copy Orig into Dest
     static bool add          (const Matrix &A, const Matrix &B, Matrix &R);
@@ -61,6 +64,7 @@ class Matrix
     static bool transpose    (const Matrix &A, Matrix &R);
     static bool divide       (const Matrix &A, Matrix &B, Matrix &R);
     static bool cholesky     (const Matrix &A, Matrix &L);
+    static bool ldl          (const Matrix &A, Matrix &L, Matrix &d);
     static bool inverse      (Matrix &A, Matrix &R);
     static bool cholinverse  (const Matrix &L, Matrix &R);
     static bool qr           (const Matrix &A, Matrix &Q, Matrix &R);
