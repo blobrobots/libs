@@ -68,22 +68,34 @@ if(Wc(1)<0)
   csign='-';
 end
 
-Sz = cholupdate(Sz, sqrt(abs(Wc(1)))*Z1s(:,1),csign);
-Sz = Sz'; %needed?
+x1
+S1
+X1
+X1s
 
-Pxz = X1s*diag(Wc)*Z1s'; %transformed cross-stddev
+z1
+Z1
+Z1s
+
+[sqrt(abs(Wc(2)))*Z1s(:,2:N) Sr]'
+Sz
+
+Sz = cholupdate(Sz, sqrt(abs(Wc(1)))*Z1s(:,1),csign);
+Sz = Sz' %needed?
+
+Pxz = X1s*diag(Wc)*Z1s' %transformed cross-stddev
 %K = (Pxz/Sz')/Sz; % inv?
 %U = K*Sz;
-U = Pxz*inv(Sz');
-K = U*inv(Sz);
+U = Pxz*inv(Sz')
+K = U*inv(Sz)
 
-x2 = x1 + K*(z - z1);  % posterior state update
+x2 = x1 + K*(z - z1)  % posterior state update
 
 S2=S1' % posterior stddev (needs upper triangular)
 
 for i=1:size(U,2)
     S2 = cholupdate(S2,U(:,i),'-');  % posterior stddev update
 end
-S2 = S2';
-
+S2 = S2'
+pause()
 end
