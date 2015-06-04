@@ -62,9 +62,19 @@ csign='+';
 if(Wc(1)<0)
   csign='-';
 end
+x1
+S1
+X1
+X1s
+Wm
+Wc
+[sqrt(abs(Wc(2)))*X1s(:,2:N) Sq]'
+csign
+sqrt(abs(Wc(1)))*X1s(:,1)
 % S1 is upper triangular
 S1 = cholupdate(S1, sqrt(abs(Wc(1)))*X1s(:,1),csign);
 S1=S1'; % we work with lower triangular
-
+S1
+pause()
 end
      

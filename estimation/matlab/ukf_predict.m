@@ -29,7 +29,7 @@ function [x1,P1,X1,X1s]=ukf_predict(dt,x,P,f,u,Q)
 % http://es.mathworks.com/matlabcentral/fileexchange/18217-learning-the-unscented-kalman-filter/content/ukf.m
 
 L = numel(x);                                 %number of states
-alpha = 1e-3;                                 %default, tunable
+alpha = 1;                                    %default, tunable
 ki = 0;                                       %default, tunable
 beta = 2;                                     %default, tunable
 lambda = alpha^2*(L+ki)-L;                    %scaling factor
