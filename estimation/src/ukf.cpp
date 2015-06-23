@@ -1,9 +1,33 @@
-/********* blob robotics 2014 *********
- *  title: ukf.cpp
- *  brief: implemention of generic UKF
- * author: adrian jimenez-gonzalez
- * e-mail: blob.robotics@gmail.com
- **************************************/
+/******************************************************************************
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Blob Robotics
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal 
+ * in the Software without restriction, including without limitation the rights 
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+ * \file       ukf.cpp
+ * \brief      implemention of generic UKF
+ * \author     adrian jimenez-gonzalez (blob.robotics@gmail.com)
+ * \copyright  the MIT License Copyright (c) 2015 Blob Robotics.
+ *
+ ******************************************************************************/
+
 #include <blob/ukf.h>
 #include <blob/math.h>
 
@@ -15,21 +39,18 @@ blob::UKF::UKF (uint8_t n, real_t *init_x) : Estimator (n, init_x)
   memset(_X, 0, sizeof(_X));
   memset(_Xs, 0, sizeof(_Xs));
 
-  _alpha = 1;                          // tunable
+  _alpha = 1;                              // tunable
   _ki = 0;                                 // tunable
   _beta = 2;                               // tunable
-  _lambda = _alpha*_alpha*(_n + _ki) - _n;  // factor
-  _c = _n + _lambda;                        // factor
+  _lambda = _alpha*_alpha*(_n + _ki) - _n; // factor
+  _c = _n + _lambda;                       // factor
   _wc[0] = _wm[0] = _lambda/_c; 
   
   for(int i = 1; i<2*_n+1; i++)
-    _wc[i] = _wm[i] = 0.5/_c;                 // weights for means
+    _wc[i] = _wm[i] = 0.5/_c;              // weights for means
 
   _wc[0] = _wc[0]+(1-_alpha*_alpha+_beta); // weights for covariance
 
-#if defined(__DEBUG__) & defined(__linux__)
-        std::cout << "[test] - before sqrt " << std::endl;
-#endif
   _c = blob::math::sqrt(_c);
 #if defined(__DEBUG__) & defined(__linux__)
         std::cout << "[test] - created UKF " << _n << std::endl;
@@ -186,14 +207,11 @@ bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_
   blob::Matrix K (_n,m,k);
   blob::Matrix aux (_n,2*_n+1,auxb);
 
-  // P!2: transformed cross-covariance
+  // Pxz: transformed cross-covariance
   retval &= blob::Matrix::multiplyDiag(Xs, wc, aux);
   retval &= Z1s.transpose();
-
   retval &= blob::Matrix::multiply(aux, Z1s, Pxz);
  
-  //retval &= Pz.inverse();
-  //retval &= blob::Matrix::multiply(Pxz, Pz, K);
   retval &= blob::Matrix::divide(Pxz, Pz, K);
   
   //state update
@@ -208,11 +226,7 @@ bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_
   retval &= Pxz.transpose();
   retval &= blob::Matrix::multiply(K, Pxz, aux);
   retval &= P.substract(aux);
-  
-  //retval &= K.transpose();
-  //retval &= blob::Matrix::multiply(Pxz, K, aux);
-  //retval &= P.substract(aux);
-  
+    
   if(retval == true)
     _updated = true;  
 #if defined(__DEBUG__) & defined(__linux__)
@@ -249,5 +263,5 @@ void blob::UKF::print  ()
 #if defined(__linux__)
   std::cout << std::endl;
 #endif
-
 }
+
