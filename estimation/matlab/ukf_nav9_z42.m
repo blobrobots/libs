@@ -1,39 +1,58 @@
-%% ukf_nav9_z42.m
-%  author: adrian jimenez gonzalez
-%  email:  blobrobotics@gmail.com
-%  date:   15-jan-2015
-%  brief:  Example of use of the ukf library to estimate position and velocity 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The MIT License (MIT)
+%
+% Copyright (c) 2015 Blob Robotics
+%
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal 
+% in the Software without restriction, including without limitation the rights 
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is 
+% furnished to do so, subject to the following conditions:
+% 
+% The above copyright notice and this permission notice shall be included in
+% all copies or substantial portions of the Software.
+% 
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+% SOFTWARE.
+% 
+% \file       ukf_nav9_z42.m
+% \brief      example of use of the ukf library to estimate position and velocity 
+% \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
+% \copyright  the MIT License Copyright (c) 2015 Blob Robots.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% example of use of the ukf library to estimate position and velocity
+% x = [px, py, pz, vx, vy, vz, axb, ayb, azb] = [pos, vel, acc_bias];
+% u = [roll, pitch, yaw, ax, ay, az];
+% z = [px, py, vx, vy] [pz, vz] = [pos,vel] [z,roc];
 
 %% save datasets
-data_file = 'ukf_nav9_z42.in';
-result_file = 'ukf_nav9_z42.out';
+% data_file = 'ukf_nav9_z42.in';
+% result_file = 'ukf_nav9_z42.out';
 
-%% tiempos de muestreo
-dt     = 0.01;    % freq de filtro 100Hz
-dtgps  = 0.1;  % freq de medida 10Hz
-dtbaro = 0.1;  % freq de medida 10Hz
+%% sample times
+dt     = 0.01; % filter sample time - 100Hz
+dtgps  = 0.1;  % gps sample time - 10Hz
+dtbaro = 0.1;  % baro sample time - 10Hz
 
 %% caracterizacion sensores
-rgps  = 0.001; %std of gps measurement
-rvgps = 0.05;
+rgps  = 0.001; %std of gps pos measurement
+rvgps = 0.01;  %std of gps vel measurement
 rbaro = 0.005; %std of baro measurement
-rbroc = 0.05;
+rbroc = 0.05;  %std of baro roc measurement
 
-%rof   = 0.15;
-%ralt  = 0.1;
-%raroc = 0.1;
-
+% std dev of process
 qpx = 0; qpy = 0; qpz = 0;
 qvx = 0; qvy = 0; qvz = 0;
 qba = 0.001;
 
-% q = [qpx,qpy,qpz,qvx,qvy,qvz,qba,qba,qba];  %std of process: qpos qvel qacc
-% rgps  = [rgps,rgps,rvgps,rvgps];            %std of gps measurement
-% rbaro = [rbaro,rbroc];                      %std of baro measurement
-% rof   = [rof,rof];                          %std of OF measurement
-% ralt  = [ralt,raroc];                       %std of altimeter measurement
-
-Q = [  (qpx*dt)^2    0     0     0      0      0     0     0     0   % covariance of process
+Q = [  (qpx*dt)^2    0     0     0      0      0     0     0     0   
          0    (qpy*dt)^2   0     0      0      0     0     0     0
          0      0   (qpz*dt)^2   0      0      0     0     0     0
          0      0     0   (qvx*dt)^2    0      0     0     0     0
@@ -41,15 +60,15 @@ Q = [  (qpx*dt)^2    0     0     0      0      0     0     0     0   % covarianc
          0      0     0     0      0    (qvz*dt)^2   0     0     0
          0      0     0     0      0      0   (qba*dt)^2   0     0
          0      0     0     0      0      0     0   (qba*dt)^2   0
-         0      0     0     0      0      0     0     0   (qba*dt)^2 ];
+         0      0     0     0      0      0     0     0   (qba*dt)^2 ]; % covariance of process
      
-Rgps = [ (rgps*dtgps)^2    0     0     0    % covariance of gps measurement
+Rgps = [ (rgps*dtgps)^2    0     0     0    
             0   (rgps*dtgps)^2   0     0
             0      0  (rvgps*dtgps)^2  0
-            0      0     0  (rvgps*dtgps)^2 ];
+            0      0     0  (rvgps*dtgps)^2 ]; % covariance of gps measurement
         
-Rbaro = [ (rbaro*dtbaro)^2    0             % covariance of baro measurement
-             0   (rbroc*dtbaro)^2   ];
+Rbaro = [ (rbaro*dtbaro)^2    0     
+             0   (rbroc*dtbaro)^2   ]; % covariance of baro measurement
 
 %% input data
 imu_ax     = imu(2).data(:,4);
@@ -66,12 +85,9 @@ gps_py     = gps(1).data(:,4);
 gps_status = gps(1).data(:,5);
 gps_index  = gps(1).data(:,6);
 
-%% initial values
-% NAV:
-% x = [px, py, pz, vx, vy, vz, axb, ayb, azb] = [pos, vel, acc_bias];
-% u = [roll, pitch, yaw, ax, ay, az];
-% z = [px, py, vx, vy] [pz, vz] = [pos,vel] [z,roc];
+time = size(gps_index,1); % total dynamic steps (1 per ms)
 
+%% initial values
 f = @(x,args)f_nav9(x,args.u,args.dt);   % prediction equation
 h = @(x,args)[x(1); x(2); x(4); x(5);];  % measurement equation
 x = zeros(9,1);          % initial state
@@ -79,8 +95,6 @@ N = size(x,1);           % number of states
 P = eye(N);              % initial state covraiance
 u = [0 0 0 0 0 -9.8];    % initial input
 z = [0;0;0;0;];          % initial measurement
-
-time = size(gps_index,1); % total dynamic steps (1 per ms)
 
 xV = zeros(N,time);
 
@@ -114,34 +128,33 @@ for t=1:time
         broc = (balt-prev_balt)/dt;
         prev_balt = balt;
         
-        u(1) = imu_roll(t); % roll
-        u(2) = imu_pitch(t); % pitch
-        u(3) = imu_yaw(t); % yaw
-        u(4) = imu_ax(t); % roll
-        u(5) = imu_ay(t); % pitch
-        u(6) = imu_az(t); % yaw
-        
         %% prediction step
+        u(1) = imu_roll(t);  % roll
+        u(2) = imu_pitch(t); % pitch
+        u(3) = imu_yaw(t);   % yaw
+        u(4) = imu_ax(t);    % roll
+        u(5) = imu_ay(t);    % pitch
+        u(6) = imu_az(t);    % yaw
         [x,P,X,Xs]= ukf_predict(dt,x,P,f,u,Q); % prediction step
+        
+        %% update step
         if(gps_status(t) < 1) % gps status not OK
             init_altitude = 0.9*init_altitude+0.1*baro.data(t,1);  
             balt=0; broc=0; 
             gps_px(t) = 0; gps_py(t) = 0;
             gps_vx(t) = 0; gps_vy(t) = 0;
         end
-        
-        %% update step
         if(mod(t,dtbaro*1000) == 0)
            h = @(x,args)[x(3); x(6);];
-           z = [-balt; -broc]; % measurements
-           [x, P] = ukf_update(dt,x,P,h,z,Rbaro,X,Xs);  % ukf measurement update
+           z = [-balt; -broc]; % baro measurements
+           [x, P] = ukf_update(dtbaro,x,P,h,z,Rbaro,X,Xs);  % baro measurement update
            X=[]; Xs=[]; % to avoid reusing it for next sensors
         end
         if((mod(t,dtgps*1000) == 0)&&(gps_index(t) ~= last_gps_index))
-            last_gps_index = gps_index(t);
+            last_gps_index = gps_index(t);  % update last index processed
             h = @(x,args)[x(1); x(2); x(4); x(5);];
-            z = [gps_px(t); gps_py(t); gps_vx(t); gps_vy(t);]; % measurements
-            [x, P] = ukf_update(dt,x,P,h,z,Rgps,X,Xs);  % ukf pmeasurement update
+            z = [gps_px(t); gps_py(t); gps_vx(t); gps_vy(t);]; % gps measurements
+            [x, P] = ukf_update(dtgps,x,P,h,z,Rgps,X,Xs);  % gps pmeasurement update
         end
         %% save datasets
         if(df_id >= 0)
