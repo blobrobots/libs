@@ -30,29 +30,29 @@ function [x2,P2] = ukf_update(dt,x1,P1,h,z,R,X1,X1s)
 % http://es.mathworks.com/matlabcentral/fileexchange/18217-learning-the-unscented-kalman-filter/content/ukf.m
 
 
-L = numel(x1);                                   %numer of states
-N = 2*L+1;                                      %number of sigma points
-M = numel(z);                                   %numer of measurements
-alpha = 1;                                      %default, tunable
-ki = 0;                                         %default, tunable
-beta = 2;                                       %default, tunable
-lambda = alpha^2*(L+ki)-L;                      %scaling factor
-c = L+lambda;                                   %scaling factor
-Wm = [lambda/c 0.5/c+zeros(1,2*L)];             %weights for means
+L = numel(x1);                                  % numer of states
+N = 2*L+1;                                      % number of sigma points
+M = numel(z);                                   % numer of measurements
+alpha = 1;                                      % default, tunable
+ki = 0;                                         % default, tunable
+beta = 2;                                       % default, tunable
+lambda = alpha^2*(L+ki)-L;                      % scaling factor
+c = L+lambda;                                   % scaling factor
+Wm = [lambda/c 0.5/c+zeros(1,2*L)];             % weights for means
 Wc = Wm;
-Wc(1) = Wc(1)+(1-alpha^2+beta);                 %weights for covariance
+Wc(1) = Wc(1)+(1-alpha^2+beta);                 % weights for covariance
 c = sqrt(c);
 
-hargs.dt=dt;                                    %number of measurements
+hargs.dt=dt;                                    % number of measurements
 
 if((exist('X') ~= 1)||(exist('Xs') ~= 1)||(isempty(X))||(isempty(Xs)))
    X1 = sigmas(x1,P1,c);                    % sigma points around prior x1
    X1s = X1-x1(:,ones(1,N));                % deviation of prior X1
 end
 
-[z1,Z1,Pz,Z1s] = ut(h, hargs, X1, Wm, Wc, M, R);  %unscented transformation of measurments
-Pxz = X1s*diag(Wc)*Z1s';                            %transformed cross-covariance
+[z1,Z1,Pz,Z1s] = ut(h, hargs, X1, Wm, Wc, M, R);  % unscented transformation of measurments
+Pxz = X1s*diag(Wc)*Z1s';                          % transformed cross-covariance
 K = Pxz*inv(Pz);                                
 
-x2 = x1 + K*(z - z1);                              %state update
-P2 = P1 - K*Pxz';                                  %covariance update
+x2 = x1 + K*(z - z1);                              % state update
+P2 = P1 - K*Pxz';                                  % covariance update

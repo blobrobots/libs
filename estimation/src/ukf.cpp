@@ -23,15 +23,15 @@
  * 
  * \file       ukf.cpp
  * \brief      implemention of generic UKF
- * \author     adrian jimenez-gonzalez (blob.robotics@gmail.com)
- * \copyright  the MIT License Copyright (c) 2015 Blob Robotics.
+ * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
+ * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
  ******************************************************************************/
 
 #include <blob/ukf.h>
 #include <blob/math.h>
 
-blob::UKF::UKF (uint8_t n, real_t *init_x) : Estimator (n, init_x)
+blob::UKF::UKF (uint8_t n, real_t *init_x, real_t alpha, real_t beta, real_t ki) : Estimator (n, init_x)
 {
 
   blob::Matrix P(_n, _n, _P);
@@ -39,9 +39,9 @@ blob::UKF::UKF (uint8_t n, real_t *init_x) : Estimator (n, init_x)
   memset(_X, 0, sizeof(_X));
   memset(_Xs, 0, sizeof(_Xs));
 
-  _alpha = 1;                              // tunable
-  _ki = 0;                                 // tunable
-  _beta = 2;                               // tunable
+  _alpha = alpha;                          // tunable
+  _ki = ki;                                // tunable
+  _beta = beta;                            // tunable
   _lambda = _alpha*_alpha*(_n + _ki) - _n; // factor
   _c = _n + _lambda;                       // factor
   _wc[0] = _wm[0] = _lambda/_c; 
@@ -64,13 +64,16 @@ bool blob::UKF::sigmas (blob::Matrix &x, blob::Matrix &P, blob::Matrix &X)
   real_t aux[BLOB_UKF_MAX_N*BLOB_UKF_MAX_N];
   blob::Matrix Aux(_n,_n, aux);
 
+  // A = c*chol(P)';
   retval &= Aux.copy(P);
   retval &= Aux.cholesky();
   retval &= Aux.scale(_c);
 
+  // Y = x(:,ones(1,L));
   for(int i=0; i<X.ncols(); i++)
     retval &= X.copy(x,0,i);
-  
+
+  // X = [x Y+A Y-A];
   retval &= X.add(Aux,0,1);
   retval &= X.substract(Aux,0,_n+1);
 
@@ -99,6 +102,7 @@ bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X,
   
   for(int k=0; k<2*_n+1; k++)
   {
+    // Y(:,i) = func(X(:,i),fargs);
     for(int i=0; i<_n; i++)
       in[i] = X(i,k);
 
@@ -107,16 +111,19 @@ bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X,
     for(int i=0; i<l; i++)
       U(i,k) = out[i];
 
+    // y = y + Wm(i)*Y(:,i);  
     retval &= out.scale(_wm[k]);
 
     retval &= u.add(out);
     
   }
 
+  // Ys = Y - y(:,ones(1,N));
   retval &= Us.copy(U);
   for(int i=0; i<U.ncols();i++)
     retval &= Us.substract(u, 0, i);
-  
+
+  // P = Ys*diag(Wc)*Ys' + R;
   blob::Matrix Aux(l, 2*_n+1, aux);
 
   retval &= blob::Matrix::multiplyDiag(Us, wc, Aux);
@@ -126,7 +133,7 @@ bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X,
   retval &= blob::Matrix::multiply(Aux,Us,Pu);
   retval &= Pu.add(R);
 
-  retval &= Us.transpose(); // avoid with a copy
+  retval &= Us.transpose(); // can be avoided with a copy
   
 #if defined(__DEBUG__) & defined(__linux__)
   if(retval == false)
@@ -186,11 +193,11 @@ bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_
   blob::Matrix Xs(_n,2*_n+1,_Xs);
   blob::Matrix wc(2*_n+1,1,_wc);
   
-  if(_updated)
+  if(_updated) // if already updated at least once,
   {    
-    // if already updated, re-calculate sigma points around x
+    // re-calculate sigma points around x
     retval &= sigmas(x,P,X);
-    // if already updated, re-calculate deviation of X
+    // re-calculate deviation of X
     retval &= Xs.copy(X);
     for(int i=0; i<X.ncols(); i++)
       retval &= Xs.substract(x,0,i);
@@ -207,22 +214,23 @@ bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_
   blob::Matrix K (_n,m,k);
   blob::Matrix aux (_n,2*_n+1,auxb);
 
-  // Pxz: transformed cross-covariance
+  // transformed cross-covariance: Pxz = X1s*diag(Wc)*Z1s'
   retval &= blob::Matrix::multiplyDiag(Xs, wc, aux);
   retval &= Z1s.transpose();
   retval &= blob::Matrix::multiply(aux, Z1s, Pxz);
- 
+  
+  // K = Pxz/Pz; 
   retval &= blob::Matrix::divide(Pxz, Pz, K);
   
-  //state update
+  // update state: x = x + K*(z - z1)
   aux.refurbish(_n,1);
   retval &= z.substract(z1);
   retval &= blob::Matrix::multiply(K, z, aux);       
   retval &= x.add(aux);
 
-  // covariance update
   aux.refurbish(_n,_n);
 
+  // update covariance: P = P - K*Pxz'  
   retval &= Pxz.transpose();
   retval &= blob::Matrix::multiply(K, Pxz, aux);
   retval &= P.substract(aux);

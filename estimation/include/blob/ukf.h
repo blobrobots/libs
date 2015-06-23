@@ -23,8 +23,8 @@
  * 
  * \file       ukf.h
  * \brief      interface for generic UKF
- * \author     adrian jimenez-gonzalez (blob.robotics@gmail.com)
- * \copyright  the MIT License Copyright (c) 2015 Blob Robotics.
+ * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
+ * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
  ******************************************************************************/
 
@@ -53,20 +53,25 @@ namespace blob {
 /**
  * Implements generic Unscented Kalman Filter.
  */
-
 class UKF : public Estimator
 {
   public:
     /**
-     * Initializes number of states, and xstate vector.
+     * Initializes filter parameters and state vector.
+     * \param n      number of states
+     * \param init_x state vector inital value
+     * \param alpha  tunable parameter
+     * \param beta   tunable parameter
+     * \param ki     tunable parameter
      */
-    UKF (uint8_t n=0, real_t* init_x=NULL);
+    UKF (uint8_t n=0, real_t* init_x=NULL, real_t alpha=1, real_t beta=2, real_t ki=0);
 
     /**
      * Applies f function to provide a model based prediction of system state.
      * \param function pointer to f function to be applied during prediction
      * \param args     pointer to f function argument structure
      * \param r        state model noise covariance matrix
+     * \return         true if successful, false otherwise
      * \sa sigmas(), ut(), update()
      */
     virtual bool predict (estimator_function_t function, void* args, real_t* r);
@@ -78,6 +83,7 @@ class UKF : public Estimator
      * \param m   sensor measurement vector length
      * \param z   sensor measurement vector
      * \param q   sensor measurement noise covariance matrix
+     * \return    true if successful, false otherwise
      * \sa sigmas(), ut(), predict()
      */
     virtual bool update  (estimator_function_t function, void* args, 
@@ -94,6 +100,7 @@ class UKF : public Estimator
      * \param x   state vector
      * \param P   state covariance matrix
      * \param X   state sigma points
+     * \return    true if successful, false otherwise
      */
     bool sigmas  (Matrix& x, Matrix& P, Matrix& X);
 
@@ -108,28 +115,29 @@ class UKF : public Estimator
      * \param Pu  transformed covariance matrix
      * \param U   transformed sigma points
      * \param Us  transformed std. dev. sigma points
+     * \return    true if successful, false otherwise
      * \sa sigmas()
      */
     bool ut (estimator_function_t function, void* args, Matrix& X, Matrix& R, 
              Matrix& u, Matrix& Pu, Matrix& U, Matrix& Us);
     
-    real_t _alpha;                  /**< alpha tunable parameter. */
-    real_t _ki;                     /**< ki tunable parameter.    */
-    real_t _beta;                   /**< beta tunable parameter.  */
-    real_t _lambda;                 /**< lambda factor.           */
-    real_t _c;                      /**< c scaling factor.        */
-    real_t _wm[2*BLOB_UKF_MAX_N+1]; /**< weights for means.       */
-    real_t _wc[2*BLOB_UKF_MAX_N+1]; /**< weights for covariance.  */ 
+    real_t _alpha;                  /**< alpha tunable parameter */
+    real_t _ki;                     /**< ki tunable parameter    */
+    real_t _beta;                   /**< beta tunable parameter  */
+    real_t _lambda;                 /**< lambda factor           */
+    real_t _c;                      /**< c scaling factor        */
+    real_t _wm[2*BLOB_UKF_MAX_N+1]; /**< weights for means       */
+    real_t _wc[2*BLOB_UKF_MAX_N+1]; /**< weights for covariance  */ 
 
     bool _updated; /**< indicates if state has already been updated with a 
-                        sensor measurement. */
+                        sensor measurement */
 
-    real_t _P[BLOB_UKF_MAX_N*BLOB_UKF_MAX_N]; /**< covariance matrix. */
+    real_t _P[BLOB_UKF_MAX_N*BLOB_UKF_MAX_N]; /**< covariance matrix */
 
     real_t _X [((2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_N)]; /**< state unscented 
-                                                            transformation. */
+                                                            transformation */
     real_t _Xs[((2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_N)]; /**< std. dev. unscented 
-                                                            transformation.  */ 
+                                                            transformation  */ 
 };
 
 }

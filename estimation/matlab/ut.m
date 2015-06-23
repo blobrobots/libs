@@ -9,7 +9,7 @@ function [y,Y,P,Ys] = ut(func,fargs,X,Wm,Wc,m,R)
 %        f: nonlinear map
 %        X: sigma points
 %       Wm: weights for mean
-%       Wc: weights for covraiance
+%       Wc: weights for covariance
 %        n: numer of outputs of f
 %        R: additive covariance
 % Output:
