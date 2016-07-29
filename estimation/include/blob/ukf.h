@@ -22,7 +22,7 @@
  * SOFTWARE.
  * 
  * \file       ukf.h
- * \brief      interface for generic UKF
+ * \brief      interface for generic unscented kalman filter
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
  * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
@@ -69,25 +69,28 @@ class UKF : public Estimator
     /**
      * Applies f function to provide a model based prediction of system state.
      * \param function pointer to f function to be applied during prediction
-     * \param args     pointer to f function argument structure
+     * \param dt       time lapse
+     * \param l        control input vector length
+     * \param u        control input vector
      * \param r        state model noise covariance matrix
      * \return         true if successful, false otherwise
      * \sa sigmas(), ut(), update()
      */
-    virtual bool predict (estimator_function_t function, void* args, real_t* r);
+    virtual bool predict (estimator_function_t function, const real_t& dt, 
+                          const uint8_t& l, real_t* u, real_t* r);
 
     /**
      * Applies h function to update system state with sensor measurement.
      * \param function pointer to h function to be applied during sensor update
-     * \param args     pointer to h function argument structure
+     * \param dt  time lapse
      * \param m   sensor measurement vector length
      * \param z   sensor measurement vector
      * \param q   sensor measurement noise covariance matrix
      * \return    true if successful, false otherwise
      * \sa sigmas(), ut(), predict()
      */
-    virtual bool update  (estimator_function_t function, void* args, 
-                          uint8_t m, real_t* z, real_t* q);
+    virtual bool update  (estimator_function_t function, const real_t& dt, 
+                          const uint8_t& m, real_t* z, real_t* q);
     /**
      * Outputs internal and state information from filter to standard output.
      */
@@ -108,7 +111,8 @@ class UKF : public Estimator
      * Performs unscented transformation applying function and covariance to 
      * sigma points.
      * \param function pointer to function to be applied during transform
-     * \param args     pointer to function argument structure
+     * \param dt       time lapse
+     * \param arg      function input argument vector
      * \param X   state sigma points
      * \param R   process covariance matrix
      * \param u   transformed state vector
@@ -118,8 +122,8 @@ class UKF : public Estimator
      * \return    true if successful, false otherwise
      * \sa sigmas()
      */
-    bool ut (estimator_function_t function, void* args, Matrix& X, Matrix& R, 
-             Matrix& u, Matrix& Pu, Matrix& U, Matrix& Us);
+    bool ut (estimator_function_t function, const real_t& dt, real_t *arg, 
+             Matrix& X, Matrix& R, Matrix& u, Matrix& Pu, Matrix& U, Matrix& Us);
     
     real_t _alpha;                  /**< alpha tunable parameter */
     real_t _ki;                     /**< ki tunable parameter    */

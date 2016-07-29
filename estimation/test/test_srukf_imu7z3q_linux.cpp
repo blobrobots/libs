@@ -10,7 +10,7 @@
 #include <math.h>
 
 #include <blob/math.h>
-#include <blob/ukf.h>
+#include <blob/srukf.h>
 
 #define N   7   // Number of states
 
@@ -23,10 +23,10 @@
 #define racc 0.1
 #define rmag 0.25
 
-#define qq_T_2   (qq*qq*T*T)
-#define qbg_T_2  (qbg*qbg*T*T)
-#define racc_T_2 (racc*racc*Tacc*Tacc)
-#define rmag_T_2 (rmag*rmag*Tmag*Tmag)
+#define qq_T   (qq*T)
+#define qbg_T  (qq*T)
+#define racc_T (racc*Tacc)
+#define rmag_T (rmag*Tmag)
 
 typedef struct {
   real_t u[3];
@@ -97,23 +97,23 @@ void hm(real_t *x, void *args, real_t * res)
 }
 
 // covariance of process
-real_t  q[] = { qq_T_2,  0,   0,   0,    0,    0,    0,      
-                 0, qq_T_2,  0,   0,    0,    0,    0,     
-                 0,   0, qq_T_2,  0,    0,    0,    0,     
-                 0,   0,   0, qq_T_2,   0,    0,    0,    
-                 0,   0,   0,   0, qbg_T_2,   0,    0,    
-                 0,   0,   0,   0,    0, qbg_T_2,   0,    
-                 0,   0,   0,   0,    0,    0, qbg_T_2 };
+real_t  sq[] = { qq_T, 0,   0,   0,    0,    0,    0,      
+                 0,   qq_T, 0,   0,    0,    0,    0,     
+                 0,    0, qq_T,  0,    0,    0,    0,     
+                 0,    0,   0, qq_T,   0,    0,    0,    
+                 0,    0,   0,   0, qbg_T,   0,    0,    
+                 0,    0,   0,   0,    0, qbg_T,   0,    
+                 0,    0,   0,   0,    0,    0, qbg_T };
 
 // covariance of measurement
-real_t ra[] = { racc_T_2,    0,     0,
-                   0, racc_T_2,    0,
-                   0,     0, racc_T_2 };
+real_t sa[] = { racc_T,   0,    0,
+                   0, racc_T,   0,
+                   0,     0, racc_T };
 
 // covariance of measurement
-real_t rm[] = { rmag_T_2,    0,     0, 
-                   0, rmag_T_2,    0,
-                   0,     0, rmag_T_2 };
+real_t sm[] = { rmag_T,   0,     0, 
+                   0, rmag_T,    0,
+                   0,     0, rmag_T };
 
 int main(int argc, char* argv[])
 {
@@ -135,8 +135,8 @@ int main(int argc, char* argv[])
         
         real_t ta = 0, tm = 0;
 
-        blob::UKF ukf(N, x);
-
+        blob::SRUKF srukf(N, x);
+        
         fargs_t fargs;
 
         while ( getline (input_file,line) )
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
             std::cout << "[test] - predicting over u=[" << fargs.u[0] << ", " << fargs.u[1] << 
                          ", " << fargs.u[2] << "], dt=" << fargs.dt << std::endl;
 #endif
-            result &= ukf.predict(&f, &fargs, q);
+            result &= srukf.predict(&f, &fargs, sq);
 
             if ((result==true)&&(ta>=Tacc))
             {
@@ -193,7 +193,7 @@ int main(int argc, char* argv[])
             std::cout << "[test] - updating over za=[" << za[0] << ", " << za[1] << 
                          ", " << za[2] << "], dta=" << ta << std::endl;
 #endif
-              result &= ukf.update (&ha, NULL, 3, za, ra);
+              result &= srukf.update (&ha, NULL, 3, za, sa);
               ta = 0;
             }
             if ((result==true)&&(tm >= Tmag))
@@ -203,12 +203,12 @@ int main(int argc, char* argv[])
             std::cout << "[test] - updating over zm=[" << zm[0] << ", " << zm[1] << 
                          ", " << zm[2] << "], dtm=" << tm << std::endl;
 #endif
-              result &= ukf.update (&hm, NULL, 3, zm, rm);
+              result &= srukf.update (&hm, NULL, 3, zm, sm);
               tm = 0;
             }
 
             // re-normalize quaternion
-            real_t *q = ukf.getState();
+            real_t *q = srukf.getState();
             real_t qnorm = blob::math::sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
             q[0] = q[0]/qnorm;
             q[1] = q[1]/qnorm;
@@ -222,12 +222,12 @@ int main(int argc, char* argv[])
 #if defined(__DEBUG__) & defined(__linux__)
             std::cout << "[test] - got state x=[";
 #endif
-            for(int i = 0; i < ukf.getNumStates(); i++)
+            for(int i = 0; i < srukf.getNumStates(); i++)
             {
-              output_file << ukf.getState(i) << " ";
+              output_file << srukf.getState(i) << " ";
 
 #if defined(__DEBUG__) & defined(__linux__)
-              std::cout << ukf.getState(i) << " ";
+              std::cout << srukf.getState(i) << " ";
 #endif
             }
 
@@ -253,3 +253,4 @@ int main(int argc, char* argv[])
   
   return 0;
 }
+

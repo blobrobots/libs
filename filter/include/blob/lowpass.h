@@ -21,49 +21,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  * 
- * \file       types.h
- * \brief      generic types for blob robots code
+ * \file       lowpass.h
+ * \brief      exponential lowpass filter interface
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
  * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
  ******************************************************************************/
 
-#ifndef B_TYPES_H
-#define B_TYPES_H
+#ifndef B_LOWPASS_H
+#define B_LOWPASS_H
 
-
-#if defined(__AVR_ATmega32U4__)
-  #include "Arduino.h"
-#endif
-
-#if defined(__linux__)
-  #include <stdio.h>
-  #include <stdint.h>
-#endif
-
-#ifndef   byte
-typedef   unsigned char byte;
-#endif
-
-#ifndef   word
-typedef   unsigned short word;
-#endif
-
-#if !defined(__cplusplus)
-	#ifndef   bool
-	typedef   unsigned char bool;
-	#endif
-#endif
-
-#ifndef   real_t
-typedef   float real_t;
-#endif
+#include <blob/types.h>
 
 namespace blob {
 
-  enum { Off=0, On=1 };
-  enum { Out=0, In=1 };
-
+/**
+ * Exponential lowpass filter.
+ */
+class LowPassF : public Filter
+{
+  public:
+    /**
+     * Initializes filter factor.
+     * \param factor  filtering factor [0,1]
+     */
+    LowPassF(const real_t& factor) {_factor = factor;}
+    /**
+     * Adds a sample to filter and returns current filter output.
+     * \param sample  new signal sample
+     * \param dt      time lapse in seconds (optional)
+     */
+    virtual real_t update (const real_t& sample, const real_t& dt=0) {
+      return (_output = _output*_factor+(1-_factor)*sample); 
+    }
+    
+  protected:
+    real_t _factor; /**< filtering factor */
+};
 }
 
-#endif // B_TYPES_H
+#endif // B_ESTIMATOR_H 

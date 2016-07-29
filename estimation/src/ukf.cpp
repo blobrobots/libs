@@ -22,7 +22,7 @@
  * SOFTWARE.
  * 
  * \file       ukf.cpp
- * \brief      implemention of generic UKF
+ * \brief      implemention of generic unscented kalman filter
  * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
  * \copyright  the MIT License Copyright (c) 2015 Blob Robots.
  *
@@ -85,8 +85,9 @@ bool blob::UKF::sigmas (blob::Matrix &x, blob::Matrix &P, blob::Matrix &X)
   return retval;
 }
 
-bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X, blob::Matrix & R, 
-                    blob::Matrix & u, blob::Matrix & Pu, blob::Matrix & U, blob::Matrix & Us)
+bool blob::UKF::ut(estimator_function_t function, const real_t& dt, real_t *arg, 
+                   blob::Matrix& X, blob::Matrix& R, blob::Matrix& u, 
+                   blob::Matrix& Pu, blob::Matrix& U, blob::Matrix& Us)
 {
   bool retval = true;
   real_t aux [(2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_LENGTH];
@@ -106,7 +107,7 @@ bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X,
     for(int i=0; i<_n; i++)
       in[i] = X(i,k);
 
-    function(in.data(), args, out.data());
+    function(dt, arg, in.data(), out.data());
 
     for(int i=0; i<l; i++)
       U(i,k) = out[i];
@@ -143,7 +144,8 @@ bool blob::UKF::ut (estimator_function_t function, void *args, blob::Matrix & X,
   return retval;
 }
 
-bool blob::UKF::predict (estimator_function_t function, void *args, real_t *r)
+bool blob::UKF::predict (estimator_function_t function, const real_t& dt, 
+                         const uint8_t& l, real_t *u, real_t *r)
 {
   bool retval = true;
 
@@ -157,7 +159,7 @@ bool blob::UKF::predict (estimator_function_t function, void *args, real_t *r)
   // calculate sigma points around x
   retval &= sigmas(x, P, X);
   // unscented transformation of state
-  retval &= ut(function, args, X, R, x, P, X, Xs);
+  retval &= ut(function, dt, u, X, R, x, P, X, Xs);
 
   if(retval == true)
     _updated = false;  
@@ -170,7 +172,8 @@ bool blob::UKF::predict (estimator_function_t function, void *args, real_t *r)
   
 }
 
-bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_t m, real_t *z_, real_t *q)
+bool blob::UKF::update  (estimator_function_t function, const real_t& dt,
+                         const uint8_t& m, real_t *z_, real_t *q)
 {
   bool retval = true;
 
@@ -204,7 +207,7 @@ bool blob::UKF::update  (estimator_function_t function, void *args, const uint8_
   }
 
   // unscented transformation of measurments
-  ut(function, args, X, Q, z1, Pz, Z1, Z1s);
+  ut(function, dt, NULL, X, Q, z1, Pz, Z1, Z1s);
 
   real_t auxb[(2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_LENGTH];
   real_t pxz [(2*BLOB_UKF_MAX_N+1)*BLOB_UKF_MAX_LENGTH];

@@ -55,11 +55,16 @@
 namespace blob {
 /**
  * Defines function to predict and update estimations 
+ * \param dt    time lapse
+ * \param state state vector
+ * \param input vector with control input or sensor measurement
+ * \param result vector with result (typically expected measurement/state)
  */
-typedef void (*estimator_function_t)(real_t *state, void *args, real_t *result);
+typedef void (*estimator_function_t)(const real_t& dt, real_t* arg, 
+                                           real_t* input, real_t* result);
 
 /**
- * Implements generic estimation algorithm.
+ * Interface  generic estimation algorithm.
  */
 class Estimator
 {
@@ -79,26 +84,29 @@ class Estimator
     /**
      * Applies function to provide a model based estimation of system state.
      * \param predictFunction  pointer to function to predict state
-     * \param args             pointer to prediction function argument structure
-     * \param importance       state model importance factor
+     * \param dt             time lapse
+     * \param n_inputs       control input vector length
+     * \param input          control input vector
+     * \param importance     state model importance factor
      * \sa update()
      */
-    virtual bool predict (estimator_function_t predictFunction, void *args, 
-                          real_t *importance) {return false;};
+    virtual bool predict (estimator_function_t predictFunction,
+                          const real_t& dt, const uint8_t& n_inputs, 
+                          real_t *input, real_t *importance) {return false;};
     
     /**
      * Applies function to update system state with sensor measurement.
      * \param updateFunction pointer to function to update state with sensors
-     * \param args           pointer to update function argument structure
+     * \param dt             time lapse
      * \param n_measurements sensor measurement vector length
      * \param measurements   sensor measurement vector
      * \param importance     sensor importance factor
      * \return               true if successful, false otherwise
      * \sa predict()
      */
-    virtual bool update  (estimator_function_t updateFunction, void *args, 
-                          uint8_t n_measurements, real_t *measurements, 
-                          real_t *importance) {return false;};
+    virtual bool update  (estimator_function_t updateFunction,
+                          const real_t& dt, const uint8_t& n_measurements,
+                          real_t* measurements, real_t* importance) {return false;};
     /**
      * Outputs internal and state information from algorithm to standard output.
      */    
@@ -120,20 +128,20 @@ class Estimator
      * \return pointer to state vector
      * \sa getNumStates()
      */
-    real_t * getState     () {return _x;}
+    real_t*  getState     () {return _x;}
     /**
      * Provides copy of state vector.
      * \param pointer to destination vector
      * \sa getNumStates()
      */
-    void     getState (real_t * state) {memcpy(state, _x, _n*sizeof(real_t));}
+    void     getState (real_t* state) {memcpy(state, _x, _n*sizeof(real_t));}
     /**
      * Provides indexed element of state vector.
      * \param i state element index to retrieve
      * \return  state vector element in ith position
      * \sa getNumStates()
      */
-    real_t   getState (uint8_t i) {return _x[i];}
+    real_t   getState (const uint8_t& i) {return _x[i];}
 
   protected: 
     real_t _n;                                  /**< state vector length */

@@ -31,11 +31,11 @@ public:
   static bool using_double() {return (sizeof(real_t)==sizeof(double));}
   
   static real_t fabs (const real_t& a) {
-    return fabsf(a);
+    return fabsf(a); /* FIXME */
   }
 
   static real_t sqrt (const real_t& a) {
-    return sqrtf(a);
+    return sqrtf(a); /* FIXME */
   }
 
   static real_t cos (const real_t& a) {
