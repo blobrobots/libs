@@ -5,7 +5,7 @@ endif(${PLATFORM} MATCHES "Arduino")
 
 cmake_minimum_required (VERSION 2.8.5)
 cmake_policy(VERSION 2.8.5)
-project(6dof)
+project(math)
 
 # flags for debug version: "-DCMAKE_BUILD_TYPE=Debug/Release"
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -32,12 +32,12 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 # build the shared and static libraries
 if(${PLATFORM} MATCHES "Arduino")
-  generate_arduino_library (blob_6dof
+  generate_arduino_library (blob_math
     SRCS ${LIB_SRC}
     BOARD leonardo)
 else(${PLATFORM} MATCHES "Arduino")
-  add_library(blob_6dof SHARED ${LIB_SRC})
-  add_library(blob_6dof_static STATIC ${LIB_SRC})
+  add_library(blob_math SHARED ${LIB_SRC})
+  add_library(blob_math_static STATIC ${LIB_SRC})
 endif(${PLATFORM} MATCHES "Arduino")
 
 # compile tests and dependencies only if standalone compilation

@@ -1,9 +1,32 @@
-/********* blob robotics 2014 *********
- *  title: math.h
- *  brief: Math functions and constants
- * author: adrian jimenez-gonzalez
- * e-mail: blob.robotics@gmail.com
- **************************************/
+/******************************************************************************
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2017 Blob Robotics
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal 
+ * in the Software without restriction, including without limitation the rights 
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * SOFTWARE.
+ * 
+ * \file       math.h
+ * \brief      blob libraries specific math operations and constants
+ * \author     adrian jimenez-gonzalez (blob.robots@gmail.com)
+ * \copyright  the MIT License Copyright (c) 2017 Blob Robots.
+ *
+ ******************************************************************************/
 
 #ifndef B_MATH_H
 #define B_MATH_H
@@ -21,287 +44,151 @@
 
 namespace blob {
 
-const real_t pi (3.14159265359);
+const real_t pi (3.14159265359); /**< Pi constant */
 
 class math
 {
 
-public:
-
-  static bool using_double() {return (sizeof(real_t)==sizeof(double));}
-  
-  static real_t fabs (const real_t& a) {
-    return fabsf(a); /* FIXME */
-  }
-
-  static real_t sqrt (const real_t& a) {
-    return sqrtf(a); /* FIXME */
-  }
-
-  static real_t cos (const real_t& a) {
-    return using_double()? cos(a) : cosf(a);
-  }
-
-  static real_t sin (const real_t& a) {
-    return using_double()? sin(a) : sinf(a);
-  }
-
-  static real_t tan (const real_t& a) {
-    return using_double()? tan(a) : tanf(a);
-  }
-
-  static real_t asin (const real_t& a) {
-    return using_double()? asin(a) : asinf(a);
-  }
-
-  static real_t acos (const real_t& a) {
-    return using_double()? acos(a) : acosf(a);
-  }
-
-  static real_t atan (const real_t& a) {
-    return using_double()? atan(a) : atanf(a);
-  }
-
-  static real_t atan2 (const real_t& a, const real_t& b) {
-    return using_double()? atan2(a, b) : atan2f(a, b);
-  }
-
-  template <class T> static T sign (const T& a) {return (a<0)? -1:1;}
-
-  template <class T> static const T& minimum (const T& a, const T& b) {
-#if defined(__AVR_ATmega32U4__)
-    return min(a,b);
-#endif // defined(__AVR_ATmega32U4__)
-#if defined(__linux__)
-    return std::min(a,b);
-#endif //defined(__linux__)
-  }
-  template <class T> static const T& maximum (const T& a, const T& b) {
-#if defined(__AVR_ATmega32U4__)
-    return max(a,b);
-#endif // defined(__AVR_ATmega32U4__)
-#if defined(__linux__)
-    return std::max(a,b);
-#endif //defined(__linux__)
-  }
-  template <class T> static const T& constrained (const T& x, const T& a, const T& b) {
-#if defined(__AVR_ATmega32U4__)
-    return constrain(x, a, b);
-#endif // defined(__AVR_ATmega32U4__)
-#if defined(__linux__)
-    if (x < a) return a; if (x > b) return b; return x;
-#endif //defined(__linux__)
-  }
-};
-
-template <typename T>
-class Vector3d
-{
-
   public:
-    T x, y, z;
-
-    // trivial ctor
-    Vector3d<T>() {
-        x = y = z = 0;
-    }
-
-    // setting ctor
-    Vector3d<T>(const T x0, const T y0, const T z0) : x(x0), y(y0), z(z0) {
-    }
-
-    // function call operator
-    void operator ()(const T x0, const T y0, const T z0)
+    /**
+     * Rotate vector
+     * \return true if real_t is equivalent to double; false if single float 
+     */
+    static bool using_double() {return (sizeof(real_t)==sizeof(double));} 
+    /**
+     * Absolute value of real number
+     * \param a  real number to provide the absolute value from
+     * \return absolute value of input real number
+     */ 
+    static real_t rabs (const real_t & x) 
     {
-        x= x0; y= y0; z= z0;
+#if defined(__linux__)
+      return using_double()?fabsf(x):fabs(x);
+#elif defined(__AVR_ATmega32U4__)
+      return fabs(x);
+#endif //if defined(__linux__)
     }
-
-    // test for equality
-    bool operator ==(const Vector3d<T> &v) const
+    /**
+     * Square root of real number
+     * \param x  real number to calculate the square root of
+     * \return square root of input real number
+     */ 
+    static real_t sqrtr (const real_t & x) 
     {
-      return (x==v.x && y==v.y && z==v.z);
+#if defined(__linux__)
+      return using_double()?sqrt(x):sqrtf(x); 
+#elif defined(__AVR_ATmega32U4__)
+      return sqrt(x);
+#endif //if defined(__linux__)
     }
-    // test for inequality
-    bool operator !=(const Vector3d<T> &v) const
+    /**
+     * Cosine of real number
+     * \param x  real number to calculate the cosine of
+     * \return cosine of input real number
+     */ 
+    static real_t cos (const real_t & x) {
+      return using_double()? cos(x) : cosf(x);
+    }
+    /**
+     * Sine of real number
+     * \param x  real number to calculate the Sine of
+     * \return sine of input real number
+     */
+    static real_t sin (const real_t & x) {
+      return using_double()? sin(x) : sinf(x);
+    }
+    /**
+     * Tangent of real number
+     * \param x  real number to calculate the tangent of
+     * \return tangent of input real number
+     */
+    static real_t tan (const real_t & x) {
+      return using_double()? tan(x) : tanf(x);
+    }
+    /**
+     * Arcsine of real number
+     * \param x  real number to calculate the arcsine of
+     * \return arcsine of input real number
+     */
+    static real_t asin (const real_t & x) {
+      return using_double()? asin(x) : asinf(x);
+    }
+    /**
+     * Arccosine of real number
+     * \param x  real number to calculate the arccosine of
+     * \return arccosine of input real number
+     */
+    static real_t acos (const real_t & x) {
+      return using_double()? acos(x) : acosf(x);
+    }
+    /**
+     * Arctangent of real number
+     * \param x  real number to calculate the arctangent of
+     * \return arctangent of input real number
+     */
+    static real_t atan (const real_t & x) {
+      return using_double()? atan(x) : atanf(x);
+    }
+    /**
+     * Two argument arctangent of real number
+     * \param y  first argument (y-axis)
+     * \param x  second argument (x-axis)
+     * \return two argument arctangent of input real number
+     */
+    static real_t atan2 (const real_t & y, const real_t& x) {
+      return using_double()? atan2(y, x) : atan2f(y, x);
+    }
+    /**
+     * Sign of a number
+     * \param x  number to calculate the sign of
+     * \return 1 or -1 depending if the number is positive or negative
+     */
+    template <class T> static T sign (const T & x) {return (x<0)? -1:1;}
+    /**
+     * Minimum of two numbers
+     * \param a  first number to compare
+     * \param b  second number to compare
+     * \return the minimum of the two numbers
+     */
+    template <class T> static const T & minimum (const T & a, const T & b) {
+#if defined(__AVR_ATmega32U4__)
+      return min(a,b);
+#endif // defined(__AVR_ATmega32U4__)
+#if defined(__linux__)
+      return std::min(a,b);
+#endif //defined(__linux__)
+    }
+    /**
+     * Maximum of two numbers
+     * \param a  first number to compare
+     * \param b  second number to compare
+     * \return the maximum of the two numbers
+     */
+    template <class T> static const T & maximum (const T & a, const T & b) {
+#if defined(__AVR_ATmega32U4__)
+      return max(a,b);
+#endif // defined(__AVR_ATmega32U4__)
+#if defined(__linux__)
+      return std::max(a,b);
+#endif //defined(__linux__)
+    }
+    /**
+     * Value constrained within an upper and a lower limit
+     * \param min  lower limit
+     * \param max  upper limit
+     * \return the minimum of the two numbers
+     */
+    template <class T> static const T & constrained (const T & x, const T & min,
+                                                                  const T & max) 
     {
-      return (x!=v.x && y!=v.y && z!=v.z);
-    }
-    // negation
-    Vector3d<T> operator -(void) const
-    {
-      return blob::Vector3d<T>(-x,-y,-z);
-    }
-    
-    // addition
-    Vector3d<T> operator +(const Vector3d<T> &v) const
-    {
-      return blob::Vector3d<T>(x+v.x, y+v.y, z+v.z);
-    }
-    // subtraction
-    Vector3d<T> operator -(const Vector3d<T> &v) const
-    {
-      return blob::Vector3d<T>(x-v.x, y-v.y, z-v.z);
-    }
-    // uniform scaling
-    Vector3d<T> operator *(const T num) const
-    {
-      return blob::Vector3d<T>(x*num, y*num, z*num);
-    }
-    // uniform scaling
-    Vector3d<T> operator  /(const T num) const
-    {
-      return Vector3d<T>(x/num, y/num, z/num);
-    }
-    
-    // addition
-    Vector3d<T> &operator +=(const Vector3d<T> &v)
-    {
-      x += v.x; y += v.y; z += v.z;
-      return *this;
-    }
-    // subtraction
-    Vector3d<T> &operator -=(const Vector3d<T> &v)
-    {
-      x -= v.x; y -= v.y; z -= v.z;
-      return *this;
-    }
-    // uniform scaling
-    Vector3d<T> &operator *=(const T num)
-    {
-      x*=num; y*=num; z*=num;
-      return *this;
-    }
-    
-    // elementwise multiplication
-    Vector3d<T> &operator &=(const Vector3d<T> &v)
-    {
-      x*=v.x; y*=v.y; z*=v.z;
-      return *this;
-    }
-
-    // uniform scaling
-    Vector3d<T> &operator /=(const T num)
-    {
-      x /= num; y /= num; z /= num;
-      return *this;
-    }
-    
-    // cast to float
-    operator Vector3d<float>() 
-    {
-      return Vector3d<float> ((float)x, (float)y, (float)z);
-    }
-
-    // allow a Vector3d to be used as an array, 0 indexed
-    T & operator[](int i) {
-        T *_v = &x;
-        return _v[i];
-    }
-
-    const T & operator[](int i) const {
-        const T *_v = &x;
-        return _v[i];
-    }
-
-    // dot product
-    T operator *(const Vector3d<T> &v) const
-    {
-      return x*v.x + y*v.y + z*v.z;
-    }
-    
-    // elementwise multiplication
-    Vector3d<T> operator &(const Vector3d<T> &v) const
-    {
-      return Vector3d<T>(x*v.x, y*v.y, z*v.z);
-    }
-
-    // cross product
-    Vector3d<T> operator %(const Vector3d<T> &v) const
-    {
-      return Vector3d<T>(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);
-    }
-
-    // computes the angle between this vector and another vector
-    float angle(const Vector3d<T> &v2) const
-    {
-      return acos(((*this)*v2) / (this->length()*v2.length()));
-    }
-
-    // check if any elements are NAN
-    bool is_nan(void) const
-    {
-      return isnan(x) || isnan(y) || isnan(z);
-    }
-    // check if any elements are infinity
-    bool is_inf(void) const
-    {
-      return isinf(x) || isinf(y) || isinf(z);
-    }
-
-    // check if all elements are zero
-    bool is_zero(void) const { return x == 0 && y == 0 && z == 0; }
-
-    // rotate
-    void rotate(T rx, T ry, T rz)
-    {
-      return; // TODO
-    }
-
-    // gets the length of this vector squared
-    T  length_squared() const
-    {
-        return (T)(length()*length());
-    }
-
-    // gets the length of this vector
-    float length(void) const
-    {
-      return sqrt(x*x+y*y+z*z);
-    }
-
-    // normalizes this vector
-    void normalize()
-    {
-        *this /= length();
-    }
-
-    // zero the vector
-    void zero()
-    {
-        x = y = z = 0;
-    }
-
-    // returns the normalized version of this vector
-    Vector3d<T> normalized() const
-    {
-        return *this/length();
-    }
-
-    // reflects this vector about n
-    void  reflect(const Vector3d<T> &n)
-    {
-        Vector3d<T>        orig(*this);
-        project(n);
-        *this = *this*2 - orig;
-    }
-
-    // projects this vector onto v
-    void project(const Vector3d<T> &v)
-    {
-        *this= v * (*this * v)/(v*v);
-    }
-
-    // returns this vector projected onto v
-    Vector3d<T> projected(const Vector3d<T> &v) const
-    {
-        return v * (*this * v)/(v*v);
+#if defined(__AVR_ATmega32U4__)
+      return constrain(x, min, max);
+#endif // defined(__AVR_ATmega32U4__)
+#if defined(__linux__)
+      if (x < min) return min; if (x > max) return max; return x;
+#endif //defined(__linux__)
     }
 };
-    // uniform scaling
-    template <typename T>
-    Vector3d<T> operator *(const T num, Vector3d<T> &r)
-    {
-      return Vector3d<T>(r.x*num, r.y*num, r.z*num);
-    }
+
 }
-#endif // B_BMATHD_H
+#endif // B_MATH_H

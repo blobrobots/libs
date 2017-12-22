@@ -75,20 +75,14 @@ class Task
      * Initializes parameters of task.
      * \return  true if successful, false otherwise
      */
-    virtual bool init   () {return true;}
+    virtual bool init () {return true;}
 
-    /**
-     * Function to be executed in loop (to be defined in inherited classes).
-     * \return  true if successful, false otherwise
-     */
-    virtual bool update () = 0;
-    
     /**
      * Provides time lapse between last to loop executions.
      * \param ms  time lapse between consecutive loop executions
      * \return    true if successful, false otherwise
      */
-    bool  loop (uint32_t ms = 0);
+    bool loop (uint32_t ms = 0);
     
     /**
      * Provides number of tasks currently in execution.
@@ -109,7 +103,11 @@ class Task
     static uint32_t timestampMs ();
 
   protected:
-
+    /**
+     * Function to be executed in loop (to be defined in inherited classes).
+     * \return  true if successful, false otherwise
+     */
+    virtual bool update () = 0;
     /**
      * Checks if a specific time lapse has passed.
      * \param ms  time lapse in ms
@@ -123,8 +121,6 @@ class Task
     uint8_t  _id;    /**< task identifier  */
     uint32_t _waitStart; /**< last loop execution timestamp in ms */
     uint32_t _dt;        /**< time lapse between task loop executions in ms */
-    
 };
 }
-
 #endif /* B_TASK_H */

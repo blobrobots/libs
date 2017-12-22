@@ -15,7 +15,7 @@ namespace blob {
 class Units
 {
   public:
-    template <class T> static const T degToRad (const T& deg) { return deg*pi/180;}
+    template <class T> static const T degToRad (const T& deg) { return (T)deg*pi/180.f;}
     template <class T> static const T knotToKmh (const T& knot) { return knot;} // FIXME
     template <class T> static const T kmhToMps (const T& kmh) { return kmh;} // FIXME
 };
