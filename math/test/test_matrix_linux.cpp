@@ -924,9 +924,9 @@ bool test15_lu()
 
 bool test16_lu()
 {
-  real_t a[] = { 1,   3,   5,
-                 2,   4,   7,
-                 1,   1,   0 };
+  real_t a[] = { 3.f,   2.f,   1.1,
+                 6.f,   2.f,   1.f,
+                 1.f,   4.f,   2.f };
 
   real_t u[] = { 1.f, 0.f, 0.f,  
                  2.f, 2.f, 0.f,  
@@ -952,7 +952,7 @@ bool test16_lu()
   
   std::cout << "test16_lu" << std::endl << std::endl;
 
-  blob::MatrixR::lu(A,L,U,P);
+  blob::MatrixR::lu(A,L,U);
   std::cout << " PA = LU =>" << std::endl; 
   std::cout << " P = " << std::endl; 
   P.print();
@@ -966,17 +966,37 @@ bool test16_lu()
   U.print();
   std::cout << std::endl;
   std::cout << "  => " << std::endl; 
-  R.multiply(P,A);
-  R.print();
+  //R.multiply(P,A);
+  //R.print();
+  blob::MatrixR::lu(A,P);
+  P.print();  
   std::cout << "  = " << std::endl; 
   R.multiply(L,U);  
   R.print();
   std::cout << std::endl;
+  std::cout << "  = " << std::endl; 
+  P.lurestore();
+  P.print();
+
+  std::cout << std::endl;
+  std::cout << " A.inv()" << std::endl;
+  std::cout << "  = " << std::endl; 
+  //blob::MatrixR::inverse(A,R,false);
+  R.copy(A);
+  R.inverse();  
+  R.print();
+  std::cout << std::endl;
+  
+  std::cout << " A*A.inv()" << std::endl;
+  blob::MatrixR::multiply(A,R,P);
+  std::cout << "  = " << std::endl; 
+  P.print();
+  
 }
 
 int main(int argc, char* argv[])
 {
-/*
+
   test00_eye ();
   test01_add ();
   test02_copy();
@@ -992,10 +1012,10 @@ int main(int argc, char* argv[])
   test11_cholupdate();
   test12_qr();
   test13_permute();
-*/
-  test14_lu();
-//  test15_lu();
-//  test16_lu();
 
+  test14_lu();
+  test15_lu();
+  test16_lu();
+  
   return 0;
 }

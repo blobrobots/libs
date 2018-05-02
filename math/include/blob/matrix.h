@@ -43,7 +43,8 @@
 
 namespace blob {
 
-const int MATRIX_MAX_LENGTH (2500); // 
+const int MATRIX_MAX_ROWCOL (50); 
+const int MATRIX_MAX_LENGTH (MATRIX_MAX_ROWCOL*MATRIX_MAX_ROWCOL);
 
 /**
  * Implements generic Matrix object and operations.
@@ -871,7 +872,7 @@ class MatrixR : public Matrix<real_t>
      */
     bool cholinverse ();
     /**
-     * Performs LU factorization
+     * Performs LU factorization with L and U matrix in self matrix
      * \return  true if successful, false otherwise.
      */
     bool lu ();
@@ -881,10 +882,13 @@ class MatrixR : public Matrix<real_t>
      */
     bool lurestore ();
     /**
-     * Inverses matrix based on Cholesky decomposition
+     * Inverses matrix based on Cholesky decomposition (if positive-definite) or
+     * LU decomposition otherwise.
+     * \param isPositiveDefinite  Indicates if inverse can be performed based on
+     *                            Chloesky decomposition. 
      * \return  true if successful, false otherwise.
      */
-    bool inverse ();
+    bool inverse (bool isPositiveDefinite=false);
     /**
      * Forces matrix definite positiveness.
      * \return  true if successful, false otherwise.
@@ -917,7 +921,8 @@ class MatrixR : public Matrix<real_t>
      * \param R  resulting inverse matrix inv(A)
      * \return  true if successful, false otherwise.
      */
-    static bool inverse (MatrixR & A, MatrixR & R);
+    static bool inverse (MatrixR & A, MatrixR & R, 
+                                      bool isPositiveDefinite=false);
     /**
      * Inverses matrix lower triangular matrix
      * https://en.wikipedia.org/wiki/Triangular_matrix
@@ -944,7 +949,7 @@ class MatrixR : public Matrix<real_t>
      */
     static bool qr (const MatrixR & A, MatrixR & Q, MatrixR & R);
     /**
-     * Matrix LU decomposition.
+     * Matrix LU decomposition with partial pivoting.
      * \param A  original matrix P*A=L*U
      * \param L  resulting lower triangular matrix
      * \param U  resulting upper triangular matrix
@@ -952,6 +957,22 @@ class MatrixR : public Matrix<real_t>
      * \return  true if successful, false otherwise.
      */
     static bool lu (const MatrixR & A, MatrixR & L, MatrixR & U, MatrixR & P);
+    /**
+     * Matrix LU decomposition without partial pivoting.
+     * \param A  original matrix A=L*U
+     * \param L  resulting lower triangular matrix
+     * \param U  resulting upper triangular matrix
+     * \return  true if successful, false otherwise.
+     */
+    static bool lu (const MatrixR & A, MatrixR & L, MatrixR & U);
+    /**
+     * Matrix LU decomposition without partial pivoting.
+     * \param A  original matrix A=L*U
+     * \param R  resulting lower and upper triangular matrix represented in same
+     *           matrix.
+     * \return  true if successful, false otherwise.
+     */
+    static bool lu (const MatrixR & A, MatrixR & R);
 };
 
 }

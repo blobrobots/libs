@@ -236,7 +236,7 @@ bool blob::MatrixR::cholinverse ()
 
 bool blob::MatrixR::lu() 
 {
-   if(_nrows!=_ncols)
+  if(_nrows!=_ncols)
   {
 #if defined(__DEBUG__) & defined(__linux__)
     std::cerr << "MatrixR::lu() error: Matrix is not square" << std::endl;
@@ -253,6 +253,7 @@ bool blob::MatrixR::lu()
         _data[j*_ncols+l]=_data[j*_ncols+l]-_data[j*_ncols+k]*_data[k*_ncols+l];
     }
   }
+  return true;
 }
 
 bool blob::MatrixR::lurestore() 
@@ -280,13 +281,15 @@ bool blob::MatrixR::lurestore()
 #endif
     }
   }
+  return true;
 }
 
-bool blob::MatrixR::inverse ()
+bool blob::MatrixR::inverse (bool isPositiveDefinite)
 {
   bool retval = false;
   
-  if((cholesky(false) == true) && (cholinverse()== true))
+  if((isPositiveDefinite == true) && (cholesky(false) == true) && 
+                                     (cholinverse()   == true))
   {
   // reconstruct inverse of A: inv(A) = inv(L)'*inv(L)
     uint8_t n = _nrows;
@@ -314,6 +317,43 @@ bool blob::MatrixR::inverse ()
       }
     }
     retval = true;
+  } 
+  else // lu decomposition inverse
+  {
+    real_t r[this->length()]; //real_t r[MATRIX_MAX_LENGTH];
+    MatrixR LU(this->nrows(),this->ncols(),r);
+
+    if( blob::MatrixR::lu(*this,LU)==true )
+    {
+      this->zero();
+      
+      real_t y[this->nrows()]; //real_t y[MATRIX_MAX_ROWCOL];
+      memset(y,0,sizeof(real_t)*this->nrows()); //memset(y,0,sizeof(real_t)*MATRIX_MAX_ROWCOL); 
+
+      uint8_t n = _nrows;
+
+      for(int c=0;c<n;c++)
+      { 
+	      for(int i=0;i<n;i++)
+        { 
+          real_t x=0; 
+	        for(int j=0;j<=i-1;j++)
+          { 
+            x += LU(i,j)*y[j];
+          }
+          y[i] = (i==c)? (1-x):(-x);
+	      }
+        for(int i=n-1;i>=0;i--)
+        { 
+          real_t x=0;
+          for(int j=i+1;j<n;j++)
+          { 
+            x += LU(i,j)*_data[j*_ncols+c];
+          }
+          _data[i*_ncols+c] = (y[i]-x)/LU(i,i);
+        }
+      }  
+    }          
   }
   return retval;
 }
@@ -461,46 +501,75 @@ bool blob::MatrixR::cholesky (const blob::MatrixR & A, blob::MatrixR & L)
   return retval;
 }
 
-/*
-bool blob::Matrix::inverse (const blob::Matrix &A, blob::Matrix &R)
-{
-  return (R.copy(A) && R.inverse());
-}
-*/
-// TODO: https://rosettacode.org/wiki/LU_decomposition
-bool blob::MatrixR::inverse (blob::MatrixR & A, blob::MatrixR & R)
+// TODO: optimize
+bool blob::MatrixR::inverse (blob::MatrixR & A, blob::MatrixR & R, 
+                                                bool isPositiveDefinite)
 {
   bool retval = false;
 
   if((R.nrows() == R.ncols())&&
      (R.nrows() == A.nrows())&& 
-     (R.ncols() == R.ncols())&&
-      A.cholesky(false) == true) // A=L
+     (R.ncols() == R.ncols()))
   {
-    uint8_t n = R.nrows();
-
-    for(int c = 0; c<n; c++)
+    if(isPositiveDefinite == true && A.cholesky(false) == true) // A=L
     {
-      // forward solve Ly = I(c)
-      for(int i = 0; i<n; i++)
-      {
-        R(c,i) = (c==i)? 1:0;
-        for(int j=0; j<i; j++)
-          R(c,i) -= A(i,j)*R(c,j);
-        R(c,i) /= A(i,i);
-      }
+      uint8_t n = R.nrows();
 
-      // backward solve L'x = y
-      for(int i=n-1; i>=0; i--)
+      for(int c = 0; c<n; c++)
       {
-        for (int j=i+1; j<n; j++)
-          R(c,i) -= A(j,i)*R(c,j);
-        R(c,i) /= A(i,i);
+        // forward solve Ly = I(c)
+        for(int i = 0; i<n; i++)
+        {
+          R(c,i) = (c==i)? 1:0;
+          for(int j=0; j<i; j++)
+            R(c,i) -= A(i,j)*R(c,j);
+          R(c,i) /= A(i,i);
+        }
+
+        // backward solve L'x = y
+        for(int i=n-1; i>=0; i--)
+        {
+          for (int j=i+1; j<n; j++)
+            R(c,i) -= A(j,i)*R(c,j);
+          R(c,i) /= A(i,i);
+        }
       }
+      // restore A from L
+      A.cholrestore(false);
+      retval = true;
     }
-    // restore A from L
-    A.cholrestore(false);
-    retval = true;
+    else if (A.lu()==true) 
+    {
+      real_t y[A.nrows()]; //real_t y[MATRIX_MAX_ROWCOL];
+      memset(y,0,sizeof(real_t)*A.nrows()); //memset(y,0,sizeof(real_t)*MATRIX_MAX_ROWCOL); 
+
+      R.zero();
+
+      uint8_t n = R.nrows();
+
+      for(int c=0;c<n;c++)
+      { 
+	      for(int i=0;i<n;i++)
+        { 
+          real_t x=0; 
+	        for(int j=0;j<=i-1;j++)
+          { 
+            x+=A(i,j)*y[j];
+          }
+          y[i] = (i==c)? (1-x):(-x);
+	      }
+        for(int i=n-1;i>=0;i--)
+        { 
+          real_t x=0;
+          for(int j=i+1;j<n;j++)
+          { 
+            x+=A(i,j)*R(j,c);
+          }
+          R(i,c)=(y[i]-x)/A(i,i);
+        }
+      }            
+      A.lurestore();
+    }
   }
   return retval;
 }
@@ -615,8 +684,11 @@ bool blob::MatrixR::qr (const MatrixR & A, MatrixR &Q, MatrixR & R)
     return false;
   }
  
-  real_t h[MATRIX_MAX_LENGTH];
-  real_t aux[MATRIX_MAX_LENGTH];
+  //real_t h[MATRIX_MAX_LENGTH];
+  //real_t aux[MATRIX_MAX_LENGTH];
+
+  real_t h[A.nrows()*A.nrows()];
+  real_t aux[A.ncols()*A.nrows()];
   
   Matrix H(m,m,h);
   Matrix Aux(m,n,aux);
@@ -680,12 +752,14 @@ bool blob::MatrixR::lu (const MatrixR & A, MatrixR & L, MatrixR & U, MatrixR & P
     return false;
   }
 
-  U.copy(A); L.eye(); P.eye();
+  U.copy(A); 
+  L.eye(); 
+  P.eye();
 
   for(int k=0; k<U.ncols()-1; k++)
   {
     // select next row to permute (partial pivoting)
-/*    real_t max=blob::math::rabs(U(k,k));
+    real_t max=blob::math::rabs(U(k,k));
     uint8_t imax=k;
     for(int i=k+1; i<A.nrows(); i++) 
     { 
@@ -702,12 +776,75 @@ bool blob::MatrixR::lu (const MatrixR & A, MatrixR & L, MatrixR & U, MatrixR & P
       L.permuteRows(k,imax,k,0);
       P.permuteRows(k,imax);
     }
-*/    for(int j=k+1; j<A.ncols(); j++) 
+    for(int j=k+1; j<A.ncols(); j++) 
     {
       L(j,k)=U(j,k)/U(k,k);
       for(int l=k;l<A.ncols();l++)
         U(j,l)=U(j,l)-L(j,k)*U(k,l);
     }
   }
+}
+
+bool blob::MatrixR::lu (const MatrixR & A, MatrixR & L, MatrixR & U)
+{
+  if((A.nrows()!=A.ncols())||(L.nrows()!=L.ncols())||(U.ncols()!=U.nrows()))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::lu() error: Matrix are not square" << std::endl;
+#endif
+    return false;
+  }
+  if((A.nrows()!=L.ncols())||(A.nrows()!=U.ncols()))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::lu() error: Matrix sizes are not equal" << std::endl;
+#endif
+    return false;
+  }
+
+  U.copy(A);
+  L.eye();
+
+  for(int k=0; k<U.ncols()-1; k++)
+  {
+    // select next row to permute (partial pivoting)
+    for(int j=k+1; j<A.ncols(); j++) 
+    {
+      L(j,k)=U(j,k)/U(k,k);
+      for(int l=k;l<A.ncols();l++)
+        U(j,l)=U(j,l)-L(j,k)*U(k,l);
+    }
+  }
+}
+
+bool blob::MatrixR::lu (const MatrixR & A, MatrixR & R)
+{
+  if((A.nrows()!=A.ncols())||(R.nrows()!=R.ncols()))
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::lu() error: Matrix are not square" << std::endl;
+#endif
+    return false;
+  }
+  if(A.nrows()!=R.ncols())
+  {
+#if defined(__DEBUG__) & defined(__linux__)
+    std::cerr << "Matrix::lu() error: Matrix sizes are not equal" << std::endl;
+#endif
+    return false;
+  }
+
+  R.copy(A);
+
+  for(int k=0; k<R.ncols()-1; k++)
+  {
+    for(int j=k+1; j<R.ncols(); j++) 
+    {
+      R(j,k)=R(j,k)/R(k,k);
+      for(int l=k+1;l<R.ncols();l++)
+        R(j,l)=R(j,l)-R(j,k)*R(k,l);
+    }
+  }
+  return true;
 }
 
